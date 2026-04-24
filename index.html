@@ -635,45 +635,69 @@
         <div class="cdet-text"><label>Response Time</label><span>Same business day</span></div>
       </div>
     </div>
-    <div class="form-box reveal">
-      <div class="form-heading">Send Us a Message</div>
-      <form id="formInner" action="https://formspree.io/f/mdaybewd" method="POST">
-        <div class="frow">
-          <div class="fg"><label>First Name</label><input type="text" id="fn" placeholder="John"/></div>
-          <div class="fg"><label>Last Name</label><input type="text" id="ln" placeholder="Doe"/></div>
-        </div>
-        <div class="fg"><label>Email Address</label><input type="email" id="em" placeholder="john@example.com"/></div>
-        <div class="fg"><label>Phone Number</label><input type="tel" id="ph" placeholder="(917) 555-0000"/></div>
-        <div class="fg">
-          <label>Agency / Violation Type</label>
-          <select id="ag">
-            <option value="">Select an agency...</option>
-            <option>FDNY — Fire Department</option>
-            <option>DOB — Dept. of Buildings</option>
-            <option>HPD — Housing Preservation &amp; Dev.</option>
-            <option>DSNY — Dept. of Sanitation</option>
-            <option>EPA — Environmental</option>
-            <option>Other / Not Sure</option>
-          </select>
-        </div>
-         <div class="fg">
-          <label>Violation or Summons</label>
-          <select id="ag">
-            <option value="">Select an option...</option>
-            <option>Violation</option>
-            <option>Summons</option>
-            <option>OATH Hearing</option>
-        <div class="fg"><label>Describe Your Situation</label><textarea id="msg" placeholder="Tell us about the violation or summons you received..."></textarea></div>
-        <button class="form-btn" onclick="submitForm()">Submit — Get Free Consultation</button>
-      </form>
-      <div class="form-success" id="formSuccess">
-        <div class="fs-icon">✅</div>
-        <div class="fs-title">Message Received!</div>
-        <p class="fs-msg">Thank you for reaching out. A member of the Gold Coast Compliance team will be in touch with you shortly.</p>
+   <div class="form-box reveal">
+  <div class="form-heading">Send Us a Message</div>
+
+  <form id="formInner" action="https://formspree.io/f/mdaybewd" method="POST">
+    <div class="frow">
+      <div class="fg">
+        <label>First Name</label>
+        <input type="text" id="fn" name="firstName" placeholder="John"/>
+      </div>
+
+      <div class="fg">
+        <label>Last Name</label>
+        <input type="text" id="ln" name="lastName" placeholder="Doe"/>
       </div>
     </div>
+
+    <div class="fg">
+      <label>Email Address</label>
+      <input type="email" id="em" name="email" placeholder="john@example.com"/>
+    </div>
+
+    <div class="fg">
+      <label>Phone Number</label>
+      <input type="tel" id="ph" name="phone" placeholder="(917) 555-0000"/>
+    </div>
+
+    <div class="fg">
+      <label>Agency / Violation Type</label>
+      <select id="agency" name="agency">
+        <option value="">Select an agency...</option>
+        <option>FDNY — Fire Department</option>
+        <option>DOB — Dept. of Buildings</option>
+        <option>HPD — Housing Preservation &amp; Dev.</option>
+        <option>DSNY — Dept. of Sanitation</option>
+        <option>EPA — Environmental</option>
+        <option>Other / Not Sure</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Violation or Summons</label>
+      <select id="caseType" name="caseType">
+        <option value="">Select an option...</option>
+        <option>Violation</option>
+        <option>Summons</option>
+        <option>OATH Hearing</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Describe Your Situation</label>
+      <textarea id="msg" name="message" placeholder="Tell us about the violation or summons you received..."></textarea>
+    </div>
+
+    <button type="submit" class="form-btn">Submit — Get Free Consultation</button>
+  </form>
+
+  <div class="form-success" id="formSuccess">
+    <div class="fs-icon">✅</div>
+    <div class="fs-title">Message Received!</div>
+    <p class="fs-msg">Thank you for reaching out. A member of the Gold Coast Compliance team will be in touch with you shortly.</p>
   </div>
-</section>
+</div>
 
 <!-- FOOTER -->
 <footer>
