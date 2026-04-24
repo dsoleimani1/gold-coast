@@ -637,7 +637,7 @@
     </div>
     <div class="form-box reveal">
       <div class="form-heading">Send Us a Message</div>
-      <div id="formInner">
+      <form id="formInner" action="https://formspree.io/f/mdaybewd" method="POST">
         <div class="frow">
           <div class="fg"><label>First Name</label><input type="text" id="fn" placeholder="John"/></div>
           <div class="fg"><label>Last Name</label><input type="text" id="ln" placeholder="Doe"/></div>
@@ -656,9 +656,16 @@
             <option>Other / Not Sure</option>
           </select>
         </div>
+         <div class="fg">
+          <label>Violation or Summons</label>
+          <select id="ag">
+            <option value="">Select an option...</option>
+            <option>Violation</option>
+            <option>Summons</option>
+            <option>OATH Hearing</option>
         <div class="fg"><label>Describe Your Situation</label><textarea id="msg" placeholder="Tell us about the violation or summons you received..."></textarea></div>
         <button class="form-btn" onclick="submitForm()">Submit — Get Free Consultation</button>
-      </div>
+      </form>
       <div class="form-success" id="formSuccess">
         <div class="fs-icon">✅</div>
         <div class="fs-title">Message Received!</div>
