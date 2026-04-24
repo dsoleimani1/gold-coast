@@ -47,11 +47,19 @@
     }
     .hero-bg {
       position: absolute; inset: 0;
-      background: linear-gradient(135deg, #1A2745 0%, #24345C 50%, #2E4170 100%);
+      background: url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000f?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+    }
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        rgba(26,39,69,0.86),
+        rgba(26,39,69,0.70)
+      );
     }
     .hero-bg-svg {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      opacity: 0.18;
+      display: none;
     }
     .hero-grid {
       position: absolute; inset: 0;
@@ -148,7 +156,18 @@
     .svc-icon { width:32px; height:32px; margin-bottom:18px; opacity:0.5; }
 
     /* CITY BAND */
-    .city-band { height:260px; position:relative; overflow:hidden; background:var(--navy-deep); }
+    .city-band {
+      height:260px;
+      position:relative;
+      overflow:hidden;
+      background: url('https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+    }
+    .city-band::after {
+      content:'';
+      position:absolute;
+      inset:0;
+      background: rgba(19,30,54,0.75);
+    }
     .city-band-text { position:absolute; inset:0; z-index:2; display:flex; align-items:center; justify-content:center; text-align:center; }
     .city-band-text h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,4vw,3rem); font-weight:700; color:var(--white); }
     .city-band-text h2 span { color:var(--gold); font-style:italic; }
@@ -189,6 +208,27 @@
     .contact-left h2 span { color:var(--gold); font-style:italic; }
     .contact-left p { color:var(--gray); font-size:0.97rem; line-height:1.78; margin-bottom:36px; }
     .contact-visual { width:100%; margin-bottom:28px; border-radius:2px; border:1px solid var(--border); overflow:hidden; background:var(--navy-deep); }
+    .about-svg-wrap img,
+    .why-svg-wrap img {
+      width:100%;
+      height:100%;
+      min-height:360px;
+      object-fit:cover;
+      display:block;
+    }
+
+    .about-svg-wrap,
+    .why-svg-wrap,
+    .contact-visual {
+      background: linear-gradient(135deg, var(--navy-deep), var(--navy-light));
+    }
+
+    .contact-visual img {
+      width:100%;
+      height:200px;
+      object-fit:cover;
+      display:block;
+    }
     .cdet { display:flex; align-items:flex-start; gap:14px; margin-bottom:16px; }
     .cdet-icon { width:36px; height:36px; background:rgba(201,160,48,0.08); border:1px solid rgba(201,160,48,0.2); border-radius:2px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .cdet-text label { display:block; font-size:0.65rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); margin-bottom:2px; }
@@ -244,9 +284,12 @@
       .about-grid,.services-top,.contact-layout,.why-layout{grid-template-columns:1fr;gap:40px;}
       .services-grid{grid-template-columns:1fr 1fr;}
       .process-steps{grid-template-columns:1fr 1fr;gap:40px;}
-      .nav-links{display:none;}
+      .nav-links{display:flex; gap:16px; flex-wrap:wrap; justify-content:flex-end;} nav{height:auto; min-height:76px; padding:10px 4%;} .nav-logo img{height:62px;} .nav-links a{font-size:0.68rem;} .nav-cta{padding:7px 14px !important;}
     }
     @media(max-width:600px){
+      nav{flex-direction:column; align-items:center; gap:8px; padding:8px 4%;}
+      .nav-links{display:flex; width:100%; justify-content:center; gap:10px;}
+      .nav-links a{font-size:0.62rem;}
       .services-grid,.process-steps,.frow{grid-template-columns:1fr;}
       .form-box{padding:28px 20px;}
       h1{font-size:2.8rem;}
@@ -338,61 +381,7 @@
   <div class="about-grid">
     <div class="about-visual reveal">
       <div class="about-svg-wrap">
-        <svg viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg">
-          <rect width="520" height="360" fill="#090F1E"/>
-          <!-- City night scene with building -->
-          <rect x="0" y="200" width="520" height="160" fill="#0E1A35"/>
-          <!-- Moon/light -->
-          <circle cx="420" cy="70" r="36" fill="rgba(201,160,48,0.12)"/>
-          <circle cx="420" cy="70" r="22" fill="rgba(201,160,48,0.18)"/>
-          <!-- Main building -->
-          <rect x="160" y="60" width="200" height="300" fill="#162040"/>
-          <rect x="200" y="40" width="120" height="20" fill="#1E2E55"/>
-          <rect x="230" y="20" width="60" height="20" fill="#1E2E55"/>
-          <rect x="248" y="5" width="24" height="15" fill="#C9A030" opacity="0.4"/>
-          <!-- Windows lit -->
-          <rect x="175" y="75" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="203" y="75" width="18" height="22" fill="rgba(201,160,48,0.3)"/>
-          <rect x="231" y="75" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="259" y="75" width="18" height="22" fill="rgba(201,160,48,0.2)"/>
-          <rect x="287" y="75" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="315" y="75" width="18" height="22" fill="rgba(201,160,48,0.4)"/>
-          <rect x="175" y="110" width="18" height="22" fill="rgba(201,160,48,0.2)"/>
-          <rect x="203" y="110" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="231" y="110" width="18" height="22" fill="rgba(201,160,48,0.3)"/>
-          <rect x="259" y="110" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="287" y="110" width="18" height="22" fill="rgba(201,160,48,0.1)"/>
-          <rect x="315" y="110" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="175" y="145" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="203" y="145" width="18" height="22" fill="rgba(201,160,48,0.2)"/>
-          <rect x="231" y="145" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="287" y="145" width="18" height="22" fill="rgba(201,160,48,0.55)"/>
-          <rect x="315" y="145" width="18" height="22" fill="rgba(201,160,48,0.3)"/>
-          <!-- Entrance -->
-          <rect x="225" y="300" width="70" height="60" fill="#0E1A35"/>
-          <rect x="238" y="285" width="44" height="15" fill="#C9A030" opacity="0.3"/>
-          <!-- Side buildings -->
-          <rect x="0" y="130" width="150" height="230" fill="#0E1A35"/>
-          <rect x="20" y="145" width="14" height="18" fill="rgba(201,160,48,0.4)"/>
-          <rect x="44" y="145" width="14" height="18" fill="rgba(201,160,48,0.2)"/>
-          <rect x="68" y="145" width="14" height="18" fill="rgba(201,160,48,0.4)"/>
-          <rect x="92" y="145" width="14" height="18" fill="rgba(201,160,48,0.3)"/>
-          <rect x="116" y="145" width="14" height="18" fill="rgba(201,160,48,0.5)"/>
-          <rect x="20" y="175" width="14" height="18" fill="rgba(201,160,48,0.2)"/>
-          <rect x="44" y="175" width="14" height="18" fill="rgba(201,160,48,0.5)"/>
-          <rect x="68" y="175" width="14" height="18" fill="rgba(201,160,48,0.3)"/>
-          <rect x="116" y="175" width="14" height="18" fill="rgba(201,160,48,0.4)"/>
-          <rect x="370" y="110" width="150" height="250" fill="#0E1A35"/>
-          <rect x="385" y="125" width="14" height="18" fill="rgba(201,160,48,0.4)"/>
-          <rect x="409" y="125" width="14" height="18" fill="rgba(201,160,48,0.55)"/>
-          <rect x="433" y="125" width="14" height="18" fill="rgba(201,160,48,0.2)"/>
-          <rect x="457" y="125" width="14" height="18" fill="rgba(201,160,48,0.4)"/>
-          <rect x="481" y="125" width="14" height="18" fill="rgba(201,160,48,0.3)"/>
-          <!-- Street glow -->
-          <rect x="0" y="355" width="520" height="5" fill="rgba(201,160,48,0.15)"/>
-          <!-- Gold coast text overlay -->
-          <text x="260" y="330" font-family="serif" font-size="11" fill="rgba(201,160,48,0.35)" text-anchor="middle" letter-spacing="3">NEW YORK CITY</text>
-        </svg>
+        <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop" alt="New York City buildings" loading="lazy" referrerpolicy="no-referrer">
       </div>
       <div class="about-photo-accent"></div>
     </div>
@@ -458,32 +447,6 @@
 
 <!-- CITY BAND -->
 <div class="city-band">
-  <svg viewBox="0 0 1440 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.5;">
-    <rect width="1440" height="260" fill="#090F1E"/>
-    <rect x="0" y="100" width="1440" height="160" fill="#0E1A35" opacity="0.8"/>
-    <rect x="30" y="60" width="50" height="200" fill="#162040"/><rect x="90" y="40" width="70" height="220" fill="#0E1A35"/>
-    <rect x="170" y="80" width="55" height="180" fill="#162040"/><rect x="235" y="30" width="45" height="230" fill="#0E1A35"/>
-    <rect x="237" y="10" width="10" height="20" fill="#C9A030" opacity="0.3"/>
-    <rect x="290" y="70" width="80" height="190" fill="#162040"/><rect x="380" y="50" width="60" height="210" fill="#0E1A35"/>
-    <rect x="450" y="85" width="90" height="175" fill="#162040"/><rect x="550" y="20" width="50" height="240" fill="#0E1A35"/>
-    <rect x="552" y="0" width="14" height="20" fill="#C9A030" opacity="0.3"/>
-    <rect x="610" y="60" width="75" height="200" fill="#162040"/><rect x="695" y="40" width="65" height="220" fill="#0E1A35"/>
-    <rect x="770" y="75" width="55" height="185" fill="#162040"/><rect x="835" y="25" width="80" height="235" fill="#0E1A35"/>
-    <rect x="837" y="5" width="12" height="20" fill="#C9A030" opacity="0.25"/>
-    <rect x="925" y="65" width="70" height="195" fill="#162040"/><rect x="1005" y="45" width="60" height="215" fill="#0E1A35"/>
-    <rect x="1075" y="80" width="85" height="180" fill="#162040"/><rect x="1170" y="35" width="55" height="225" fill="#0E1A35"/>
-    <rect x="1235" y="70" width="75" height="190" fill="#162040"/><rect x="1320" y="55" width="65" height="205" fill="#0E1A35"/>
-    <rect x="1395" y="85" width="45" height="175" fill="#162040"/>
-    <!-- Water reflection -->
-    <rect x="0" y="235" width="1440" height="25" fill="rgba(201,160,48,0.06)"/>
-    <!-- Gradient overlay -->
-    <rect x="0" y="0" width="200" height="260" fill="url(#gl)"/>
-    <rect x="1240" y="0" width="200" height="260" fill="url(#gr)"/>
-    <defs>
-      <linearGradient id="gl" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#090F1E"/><stop offset="100%" stop-color="transparent"/></linearGradient>
-      <linearGradient id="gr" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="transparent"/><stop offset="100%" stop-color="#090F1E"/></linearGradient>
-    </defs>
-  </svg>
   <div class="city-band-text">
     <h2>Serving All of <span>New York City</span></h2>
   </div>
@@ -510,61 +473,7 @@
   <div class="why-layout">
     <div class="why-visual reveal">
       <div class="why-svg-wrap">
-        <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="500" fill="#090F1E"/>
-          <!-- Desk scene - professional compliance work -->
-          <rect x="0" y="320" width="400" height="180" fill="#0E1A35"/>
-          <!-- Desk -->
-          <rect x="30" y="320" width="340" height="12" fill="#162040"/>
-          <rect x="50" y="332" width="10" height="80" fill="#1E2E55"/>
-          <rect x="340" y="332" width="10" height="80" fill="#1E2E55"/>
-          <!-- Laptop -->
-          <rect x="130" y="245" width="140" height="90" rx="4" fill="#1E2E55"/>
-          <rect x="135" y="250" width="130" height="80" rx="2" fill="#0E1A35"/>
-          <!-- Screen content (documents) -->
-          <rect x="145" y="258" width="80" height="5" rx="1" fill="rgba(201,160,48,0.6)"/>
-          <rect x="145" y="268" width="110" height="3" rx="1" fill="rgba(200,211,232,0.3)"/>
-          <rect x="145" y="275" width="95" height="3" rx="1" fill="rgba(200,211,232,0.2)"/>
-          <rect x="145" y="282" width="105" height="3" rx="1" fill="rgba(200,211,232,0.3)"/>
-          <rect x="145" y="289" width="70" height="3" rx="1" fill="rgba(200,211,232,0.2)"/>
-          <rect x="145" y="300" width="50" height="18" rx="2" fill="rgba(201,160,48,0.4)"/>
-          <!-- Laptop base -->
-          <rect x="110" y="335" width="180" height="8" rx="2" fill="#1E2E55"/>
-          <rect x="170" y="338" width="60" height="3" rx="1" fill="#0E1A35"/>
-          <!-- Documents/papers on desk -->
-          <rect x="40" y="290" width="80" height="100" rx="2" fill="#162040"/>
-          <rect x="44" y="296" width="55" height="4" rx="1" fill="rgba(201,160,48,0.5)"/>
-          <rect x="44" y="306" width="68" height="3" rx="1" fill="rgba(200,211,232,0.25)"/>
-          <rect x="44" y="313" width="60" height="3" rx="1" fill="rgba(200,211,232,0.2)"/>
-          <rect x="44" y="320" width="65" height="3" rx="1" fill="rgba(200,211,232,0.25)"/>
-          <rect x="44" y="327" width="50" height="3" rx="1" fill="rgba(200,211,232,0.15)"/>
-          <!-- FDNY notice stamp -->
-          <rect x="52" y="340" width="40" height="28" rx="2" fill="rgba(201,160,48,0.15)" stroke="rgba(201,160,48,0.4)" stroke-width="1"/>
-          <text x="72" y="358" font-family="sans-serif" font-size="7" fill="rgba(201,160,48,0.7)" text-anchor="middle">FDNY</text>
-          <!-- Phone -->
-          <rect x="295" y="278" width="55" height="90" rx="5" fill="#1E2E55"/>
-          <rect x="299" y="285" width="47" height="72" rx="2" fill="#0E1A35"/>
-          <rect x="304" y="290" width="37" height="4" rx="1" fill="rgba(201,160,48,0.5)"/>
-          <rect x="304" y="298" width="30" height="3" rx="1" fill="rgba(200,211,232,0.3)"/>
-          <rect x="304" y="305" width="35" height="3" rx="1" fill="rgba(200,211,232,0.2)"/>
-          <circle cx="322" cy="325" r="8" fill="rgba(201,160,48,0.2)" stroke="rgba(201,160,48,0.4)" stroke-width="1"/>
-          <!-- Coffee cup -->
-          <rect x="300" y="295" width="22" height="26" rx="2" fill="#C9A030" opacity="0.15"/>
-          <!-- Gold coast logo small -->
-          <circle cx="200" cy="120" r="60" fill="rgba(201,160,48,0.04)" stroke="rgba(201,160,48,0.1)" stroke-width="1"/>
-          <!-- Lighthouse simplified -->
-          <rect x="193" y="80" width="14" height="70" fill="rgba(201,160,48,0.2)"/>
-          <polygon points="190,80 210,80 205,68 195,68" fill="rgba(201,160,48,0.3)"/>
-          <circle cx="197" cy="100" r="3" fill="rgba(201,160,48,0.5)"/>
-          <!-- Sun -->
-          <circle cx="178" cy="115" r="14" fill="rgba(201,160,48,0.25)"/>
-          <!-- Stars -->
-          <circle cx="80" cy="40" r="1.5" fill="rgba(201,160,48,0.4)"/>
-          <circle cx="140" cy="25" r="1" fill="rgba(201,160,48,0.3)"/>
-          <circle cx="300" cy="35" r="1.5" fill="rgba(201,160,48,0.4)"/>
-          <circle cx="360" cy="60" r="1" fill="rgba(201,160,48,0.3)"/>
-          <circle cx="60" cy="80" r="1" fill="rgba(201,160,48,0.2)"/>
-        </svg>
+        <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1600&auto=format&fit=crop" alt="Professional compliance coordination" loading="lazy" referrerpolicy="no-referrer">
       </div>
       <div class="why-badge">NYC Compliance Experts</div>
     </div>
@@ -587,40 +496,7 @@
         <p>Don't let a violation become a bigger problem. Reach out for a free consultation — we'll review your case and tell you exactly how we can help.</p>
       </div>
       <div class="contact-visual">
-        <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg">
-          <rect width="420" height="200" fill="#090F1E"/>
-          <!-- Manhattan bridge silhouette -->
-          <rect x="0" y="130" width="420" height="70" fill="#0E1A35"/>
-          <!-- Bridge towers -->
-          <rect x="100" y="50" width="20" height="150" fill="#162040"/>
-          <rect x="300" y="50" width="20" height="150" fill="#162040"/>
-          <!-- Bridge cables -->
-          <line x1="110" y1="55" x2="0" y2="140" stroke="rgba(201,160,48,0.3)" stroke-width="1"/>
-          <line x1="110" y1="55" x2="210" y2="130" stroke="rgba(201,160,48,0.3)" stroke-width="1"/>
-          <line x1="310" y1="55" x2="210" y2="130" stroke="rgba(201,160,48,0.3)" stroke-width="1"/>
-          <line x1="310" y1="55" x2="420" y2="140" stroke="rgba(201,160,48,0.3)" stroke-width="1"/>
-          <!-- Road deck -->
-          <rect x="0" y="128" width="420" height="6" fill="#1E2E55"/>
-          <!-- Water -->
-          <rect x="0" y="155" width="420" height="45" fill="rgba(14,26,53,0.8)"/>
-          <rect x="0" y="163" width="420" height="2" fill="rgba(201,160,48,0.06)"/>
-          <rect x="0" y="172" width="420" height="2" fill="rgba(201,160,48,0.04)"/>
-          <!-- City behind bridge -->
-          <rect x="0" y="70" width="90" height="62" fill="#0E1A35"/>
-          <rect x="15" y="80" width="8" height="10" fill="rgba(201,160,48,0.3)"/>
-          <rect x="30" y="80" width="8" height="10" fill="rgba(201,160,48,0.2)"/>
-          <rect x="45" y="80" width="8" height="10" fill="rgba(201,160,48,0.35)"/>
-          <rect x="60" y="80" width="8" height="10" fill="rgba(201,160,48,0.15)"/>
-          <rect x="330" y="60" width="90" height="72" fill="#0E1A35"/>
-          <rect x="340" y="72" width="8" height="10" fill="rgba(201,160,48,0.3)"/>
-          <rect x="355" y="72" width="8" height="10" fill="rgba(201,160,48,0.2)"/>
-          <rect x="370" y="72" width="8" height="10" fill="rgba(201,160,48,0.35)"/>
-          <rect x="385" y="72" width="8" height="10" fill="rgba(201,160,48,0.25)"/>
-          <!-- Gold horizon glow -->
-          <rect x="0" y="128" width="420" height="6" fill="rgba(201,160,48,0.08)"/>
-          <!-- NYC label -->
-          <text x="210" y="190" font-family="serif" font-size="10" fill="rgba(201,160,48,0.3)" text-anchor="middle" letter-spacing="4">NEW YORK CITY</text>
-        </svg>
+        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600&auto=format&fit=crop" alt="New York City architecture" loading="lazy" referrerpolicy="no-referrer">
       </div>
       <div class="cdet">
         <div class="cdet-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
