@@ -1,24 +1,3526 @@
-{
-  "name": "gcc-lookup",
-  "version": "1.0.0",
-  "description": "Gold Coast Compliance Internal Lookup Tool",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GCC Lookup v15.5 Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#C9A030;--gold-l:#E8BE55;--navy:#0E1A35;--navy-mid:#162040;--navy-light:#1E2E55;--navy-deep:#090F1E;--white:#F7F4EE;--gray:#8A9BB8;--text:#C8D3E8;--border:rgba(201,160,48,0.18);--red:#E05252;--green:#52C07A;--orange:#E09452}
+body{font-family:'Barlow',sans-serif;background:var(--navy-deep);color:var(--text);min-height:100vh}
+header{background:rgba(9,15,30,0.97);border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;color:var(--white);letter-spacing:0.1em;text-transform:uppercase}
+.logo span{color:var(--gold)}
+.header-right{display:flex;align-items:center;gap:12px}
+.hbadge{font-size:0.65rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);background:rgba(201,160,48,0.1);border:1px solid rgba(201,160,48,0.25);padding:4px 12px;border-radius:2px}
+.vbadge{font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);background:rgba(138,155,184,0.08);border:1px solid rgba(138,155,184,0.18);padding:4px 10px;border-radius:2px}
+main{max-width:1100px;margin:0 auto;padding:36px 24px}
+.card{background:var(--navy-mid);border:1px solid var(--border);padding:32px 36px;margin-bottom:20px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-l),var(--gold))}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:700;color:var(--white);margin-bottom:4px}
+.card-sub{font-size:0.82rem;color:var(--gray);margin-bottom:22px}
+
+.mode-tabs{display:flex;gap:0;margin-bottom:22px;border:1px solid var(--border);border-radius:2px;overflow:hidden;width:fit-content}
+.mode-tab{padding:8px 22px;font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;background:transparent;color:var(--gray);border:none;transition:all 0.18s}
+.mode-tab.active{background:var(--gold);color:var(--navy)}
+.mode-tab:not(.active):hover{color:var(--white)}
+
+.addr-grid{display:grid;grid-template-columns:110px 1fr 160px auto;gap:10px;align-items:end}
+.bin-grid{display:grid;grid-template-columns:260px auto;gap:10px;align-items:end}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:0.62rem;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--gray)}
+.fg input,.fg select{background:rgba(9,15,30,0.8);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:11px 13px;font-family:'Barlow',sans-serif;font-size:0.88rem;border-radius:2px;outline:none;transition:border-color 0.2s;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--gold)}
+.fg select option{background:var(--navy-mid)}
+.bin-input{font-family:'Barlow Condensed',sans-serif !important;font-size:1.5rem !important;font-weight:700 !important;letter-spacing:0.1em !important;color:var(--gold-l) !important;border-color:rgba(201,160,48,0.3) !important}
+.bin-input::placeholder{color:rgba(201,160,48,0.22) !important;font-size:1rem !important}
+.sbtn{background:var(--gold);color:var(--navy);padding:0 26px;font-family:'Barlow Condensed',sans-serif;font-size:0.98rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;transition:background 0.2s;height:43px;white-space:nowrap}
+.sbtn:hover{background:var(--gold-l)}
+.sbtn:disabled{opacity:0.4;cursor:not-allowed}
+.search-panel{display:none}
+.search-panel.active{display:block}
+
+.tip{display:flex;gap:10px;background:rgba(201,160,48,0.05);border:1px solid rgba(201,160,48,0.15);padding:11px 15px;border-radius:2px;margin-bottom:18px;font-size:0.78rem;color:var(--gray);line-height:1.6}
+.tip strong{color:var(--gold-l)}
+
+#binBanner{display:none;align-items:center;gap:16px;padding:14px 20px;background:rgba(201,160,48,0.07);border:1px solid rgba(201,160,48,0.3);border-top:none;margin-bottom:0;flex-wrap:wrap}
+#binBanner.on{display:flex}
+.bin-label{font-size:0.62rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray);margin-bottom:2px}
+.bin-val{font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:800;color:var(--gold);letter-spacing:0.08em;cursor:pointer;border-bottom:1px dashed rgba(201,160,48,0.4);transition:color 0.15s}
+.bin-val:hover{color:var(--gold-l)}
+.bin-copied{font-size:0.65rem;color:var(--green);margin-left:8px;opacity:0;transition:opacity 0.3s;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.bin-copied.show{opacity:1}
+.bin-portals{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.bp-btn{background:rgba(201,160,48,0.1);border:1px solid rgba(201,160,48,0.25);color:var(--gold);padding:6px 14px;font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;border-radius:2px;white-space:nowrap;transition:all 0.18s}
+.bp-btn:hover{background:rgba(201,160,48,0.2);color:var(--gold-l)}
+.bp-fdny{background:rgba(224,82,82,0.08);border-color:rgba(224,82,82,0.3);color:var(--red)}
+.bp-fdny:hover{background:rgba(224,82,82,0.16)}
+.bp-now{background:rgba(96,165,250,0.09);border-color:rgba(96,165,250,0.28);color:#93c5fd}
+.bp-now:hover{background:rgba(96,165,250,0.18);color:#bfdbfe}
+#binBanner{box-shadow:0 10px 24px rgba(0,0,0,.12)}
+.ahead{border-left:3px solid transparent}
+.ablock .ahead:hover{border-left-color:var(--gold)}
+.intel-drop .ahead{background:linear-gradient(90deg,rgba(201,160,48,.08),var(--navy-mid))}
+.intel-drop .atbl{background:rgba(9,15,30,.18)}
+
+
+#bar{display:none;align-items:center;gap:11px;padding:9px 15px;background:rgba(9,15,30,0.4);border:1px solid rgba(201,160,48,0.15);border-top:none;margin-bottom:0;font-size:0.81rem;color:var(--gray)}#bar.on{margin-bottom:20px}
+#bar.on{display:flex}
+.spin{width:15px;height:15px;border:2px solid rgba(201,160,48,0.2);border-top-color:var(--gold);border-radius:50%;animation:sp 0.7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+#sumRow{display:none;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:2px;margin-bottom:18px}
+#sumRow.on{display:grid}
+.sc{background:var(--navy-mid);border:1px solid var(--border);padding:13px 15px}
+.sc-ag{font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:2px}
+.sc-ag-HPD  { color: #a78bfa; }
+.sc-ag-DOB  { color: #60a5fa; }
+.sc-ag-ECB  { color: #f97316; }
+.sc-ag-FDNY { color: #f87171; }
+.sc-ag-DSNY { color: #86efac; }
+.sc-ag-311  { color: #fde047; }
+.sc-ag-JOBS { color: #67e8f9; }
+.sc-ag-OATH { color: #fb923c; }
+.sc-n{font-family:'Barlow Condensed',sans-serif;font-size:1.75rem;font-weight:800;line-height:1;color:var(--gold)}
+.sc-n.z{color:var(--green)}.sc-n.e{color:var(--orange);font-size:0.88rem;padding-top:4px}
+.sc-l{font-size:0.63rem;color:var(--gray);margin-top:2px}
+@keyframes pl{0%,100%{opacity:0.2}50%{opacity:0.8}}
+.loading{animation:pl 1.2s infinite}
+
+.ablock{margin-bottom:11px}
+.ahead{display:flex;align-items:center;gap:11px;padding:12px 17px;background:var(--navy-mid);border:1px solid var(--border);cursor:pointer;user-select:none;transition:background 0.18s}
+.ahead:hover{background:var(--navy-light)}
+.atag{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;min-width:50px}
+.atag-HPD  { color: #a78bfa; }
+.atag-DOB  { color: #60a5fa; }
+.atag-ECB  { color: #f97316; }
+.atag-FDNY { color: #f87171; }
+.atag-DSNY { color: #86efac; }
+.atag-311  { color: #fde047; }
+.atag-JOBS { color: #67e8f9; }
+.atag-OATH { color: #fb923c; }
+.aname{font-size:0.8rem;font-weight:500;color:var(--white);flex:1}
+.abadge{font-family:'Barlow Condensed',sans-serif;font-size:0.69rem;font-weight:700;padding:3px 9px;border-radius:2px;letter-spacing:0.04em}
+.b-hit{background:rgba(224,82,82,0.13);color:var(--red)}
+.b-none{background:rgba(82,192,122,0.13);color:var(--green)}
+.b-err{background:rgba(224,148,82,0.13);color:var(--orange)}
+.b-skip{background:rgba(138,155,184,0.1);color:var(--gray)}
+.chv{color:var(--gray);font-size:10px;transition:transform 0.18s;flex-shrink:0}
+.chv.o{transform:rotate(180deg)}
+.atbl{display:none;border:1px solid var(--border);border-top:none}
+.atbl.o{display:block}
+
+.tscroll{overflow-x:auto;max-height:380px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:0.75rem}
+thead{position:sticky;top:0;z-index:2}
+thead tr{background:#0c1525}
+th{padding:8px 11px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:0.59rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);white-space:nowrap;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.03)}
+tbody tr:hover{background:rgba(201,160,48,0.04)}
+td{padding:8px 11px;color:var(--text);vertical-align:top;max-width:240px;word-break:break-word}
+td.id{font-family:monospace;font-size:0.71rem;color:var(--gold-l);white-space:nowrap}
+a.oath-link{color:var(--gold-l);text-decoration:none;font-family:monospace;font-size:0.71rem;border-bottom:1px dashed rgba(201,160,48,0.35);transition:color 0.15s}
+a.oath-link:hover{color:var(--gold)}
+.p{display:inline-block;padding:2px 7px;border-radius:2px;font-size:0.65rem;font-weight:700;white-space:nowrap}
+.p-o{background:rgba(224,82,82,0.13);color:var(--red)}
+.p-yellow{background:rgba(210,185,40,0.12);border-color:rgba(210,185,40,0.35);color:#d4b93a}
+.p-red{background:rgba(220,60,60,0.15);border-color:rgba(220,60,60,0.4);color:#e05252}
+.p-c{background:rgba(82,192,122,0.13);color:var(--green)}
+.p-p{background:rgba(224,148,82,0.13);color:var(--orange)}
+.nodata{padding:18px;text-align:center;color:var(--green);font-size:0.8rem;background:rgba(82,192,122,0.03)}
+.errmsg{padding:14px;color:var(--orange);font-size:0.77rem;line-height:1.55;background:rgba(224,148,82,0.03)}
+.errmsg code{font-size:0.68rem;opacity:0.5;display:block;margin-top:3px;font-family:monospace;word-break:break-all}
+.skipmsg{padding:14px;color:var(--gray);font-size:0.78rem;background:rgba(138,155,184,0.04)}
+#intelPanel.on{display:block!important}
+#empty{text-align:center;padding:60px 20px;color:var(--gray)}
+#empty .big{font-family:'Barlow Condensed',sans-serif;font-size:2.6rem;font-weight:800;color:rgba(201,160,48,0.07);margin-bottom:12px}
+@media(max-width:760px){.addr-grid{grid-template-columns:90px 1fr}.addr-grid .fg:nth-child(3){grid-column:13}header{padding:0 16px}.card{padding:22px 18px}.bin-portals{margin-left:0;width:100%}}
+
+
+#sidebar{flex-shrink:0;transition:width 0.28s ease,min-width 0.28s ease,opacity 0.2s ease,border-right-color 0.28s ease}
+#sidebar.collapsed{width:0!important;min-width:0!important;opacity:0;pointer-events:none;border-right-color:transparent!important}
+#sbToggleBtn:hover{color:var(--gold)!important}
+#appWrap{justify-content:center}
+#mainContent{flex:1;min-width:0;max-width:1100px;padding:36px 24px;width:100%}
+
+
+#saveLocBtn:hover { background:rgba(82,192,122,0.22)!important; border-color:var(--green)!important; }
+
+.client-picker { display:flex; flex-direction:column; gap:6px; max-height:200px; overflow-y:auto; margin-bottom:4px; }
+.client-option {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border:1px solid rgba(255,255,255,0.07);
+  border-radius:2px; cursor:pointer; transition:all 0.15s;
+  background:rgba(9,15,30,0.5);
+}
+.client-option:hover { border-color:var(--gold); background:rgba(201,160,48,0.07); }
+.client-option.selected { border-color:var(--gold); background:rgba(201,160,48,0.1); }
+.client-option-name { font-size:0.88rem; font-weight:600; color:var(--white); flex:1; }
+.client-option-count { font-size:0.7rem; color:var(--gray); }
+.no-clients-msg { padding:16px; text-align:center; color:var(--gray); font-size:0.82rem; line-height:1.6; }
+
+
+#buildingProfile {
+  display: none;
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+}
+#buildingProfile::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-l), var(--gold));
+}
+#buildingProfile.loaded { display: block; }
+.bp-header {
+  padding: 16px 24px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+}
+.bp-address {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 1.1rem; font-weight: 400; color: var(--white);
+  letter-spacing: 0.01em;
+}
+.bp-owner {
+  font-size: 0.78rem; color: var(--gray); flex: 1;
+}
+.bp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1px;
+  background: rgba(201,160,48,0.06);
+}
+.bp-stat {
+  background: var(--navy-mid);
+  padding: 14px 16px;
+}
+.bp-stat-label {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gray); margin-bottom: 4px;
+}
+.bp-stat-val {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.3rem; font-weight: 800; color: var(--white); line-height: 1;
+}
+.bp-stat-val.gold { color: var(--gold); }
+.bp-stat-sub {
+  font-size: 0.68rem; color: var(--gray); margin-top: 2px;
+}
+.bp-loading {
+  padding: 20px 24px;
+  font-size: 0.82rem; color: var(--gray);
+  display: flex; align-items: center; gap: 10px;
+}
+
+#sbToggleBtn { display:flex; align-items:center; justify-content:center; }
+#sbToggleBtn:hover{color:var(--gold)!important}
+
+
+#appWrap{display:flex;min-height:calc(100vh - 64px);justify-content:center}
+#mainContent{flex:1;min-width:0;max-width:1100px;padding:36px 24px;width:100%}
+
+
+#sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--navy-mid);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  position: sticky;
+  top: 64px;
+  overflow: hidden;
+  transition: width 0.28s ease, min-width 0.28s ease, opacity 0.2s ease, border-right-color 0.28s ease;
+  flex-shrink: 0;
+}
+#sidebar.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+  border-right-color: transparent !important;
+}
+
+
+.sb-header {
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--navy-deep);
+}
+.sb-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.65rem; font-weight: 800;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sb-title::before {
+  content: ''; width: 3px; height: 12px;
+  background: var(--gold); border-radius: 1px;
+}
+.sb-search {
+  width: 100%;
+  background: rgba(9,15,30,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--white); padding: 10px 12px;
+  font-family: 'Barlow', sans-serif; font-size: 0.85rem;
+  border-radius: 2px; outline: none;
+  transition: border-color 0.2s;
+}
+.sb-search:focus { border-color: var(--gold); }
+.sb-search::placeholder { color: var(--gray); font-size: 0.82rem; }
+.sb-add-btn {
+  width: 100%; margin-top: 10px;
+  background: transparent;
+  border: 1px solid rgba(201,160,48,0.22);
+  color: var(--gold); padding: 9px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border-radius: 2px; cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.sb-add-btn:hover { background: rgba(201,160,48,0.08); border-color: var(--gold); }
+
+
+#sbList { flex: 1; overflow-y: auto; padding: 6px 0; }
+#sbList::-webkit-scrollbar { width: 3px; }
+#sbList::-webkit-scrollbar-thumb { background: rgba(201,160,48,0.15); border-radius: 2px; }
+
+
+.sb-empty {
+  padding: 28px 16px; text-align: center;
+  color: var(--gray); font-size: 0.78rem; line-height: 1.7;
+}
+.sb-empty span { color: var(--gold); font-weight: 600; }
+
+
+.sb-client { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.sb-client-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; cursor: pointer;
+  transition: background 0.15s; user-select: none;
+  position: relative;
+}
+.sb-client-header:hover { background: rgba(255,255,255,0.03); }
+.sb-client-arrow {
+  font-size: 8px; color: rgba(201,160,48,0.5);
+  transition: transform 0.18s; flex-shrink: 0;
+}
+.sb-client-arrow.open { transform: rotate(90deg); color: var(--gold); }
+.sb-client-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem; font-weight: 700;
+  color: var(--white); flex: 1; letter-spacing: 0.03em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-client-count {
+  font-size: 0.62rem; color: var(--gray);
+  background: rgba(138,155,184,0.1);
+  border: 1px solid rgba(138,155,184,0.12);
+  padding: 1px 7px; border-radius: 10px; flex-shrink: 0;
+}
+.sb-client-actions { display: none; gap: 2px; flex-shrink: 0; }
+.sb-client-header:hover .sb-client-actions { display: flex; }
+.sb-icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--gray); font-size: 0.72rem; padding: 3px 5px;
+  border-radius: 2px; transition: all 0.15s; line-height: 1;
+}
+.sb-icon-btn:hover { color: var(--gold); background: rgba(201,160,48,0.08); }
+.sb-icon-btn.del:hover { color: var(--red); background: rgba(224,82,82,0.08); }
+
+
+.sb-props { display: none; }
+.sb-props.open { display: block; }
+.sb-prop {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px 8px 26px; cursor: pointer;
+  transition: background 0.15s; border-left: 2px solid transparent;
+  margin-left: 0;
+}
+.sb-prop:hover { background: rgba(255,255,255,0.025); }
+.sb-prop.active {
+  background: rgba(201,160,48,0.06);
+  border-left-color: var(--gold);
+}
+.sb-prop-icon { font-size: 0.65rem; color: rgba(138,155,184,0.5); margin-top: 3px; flex-shrink: 0; }
+.sb-prop-info { flex: 1; min-width: 0; }
+.sb-prop-name {
+  font-size: 0.78rem; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.sb-prop.active .sb-prop-name { color: var(--white); }
+.sb-prop-addr {
+  font-size: 0.68rem; color: var(--gray); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-prop-tag {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 2px 5px; border-radius: 2px;
+  background: rgba(138,155,184,0.08);
+  border: 1px solid rgba(138,155,184,0.12);
+  color: var(--gray); flex-shrink: 0; margin-top: 2px; white-space: nowrap;
+}
+.sb-prop-tag.res { background: rgba(82,192,122,0.08); border-color: rgba(82,192,122,0.15); color: var(--green); }
+.sb-prop-tag.com { background: rgba(201,160,48,0.08); border-color: rgba(201,160,48,0.15); color: var(--gold); }
+.sb-prop-tag.mix { background: rgba(224,148,82,0.08); border-color: rgba(224,148,82,0.15); color: var(--orange); }
+.sb-prop-actions { display: none; gap: 2px; flex-shrink: 0; }
+.sb-prop:hover .sb-prop-actions { display: flex; }
+.sb-add-prop {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px 7px 30px;
+  color: rgba(138,155,184,0.4); font-size: 0.72rem; cursor: pointer;
+  transition: color 0.15s;
+}
+.sb-add-prop:hover { color: var(--gold); }
+
+
+.sb-modal-overlay {
+  position: fixed; inset: 0; background: rgba(9,15,30,0.88);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.sb-modal {
+  background: var(--navy-mid); border: 1px solid var(--border);
+  padding: 28px 32px; width: 440px; max-width: 94vw;
+  position: relative; max-height: 90vh; overflow-y: auto;
+}
+.sb-modal::before {
+  content:''; position: absolute; top:0; left:0; right:0; height:3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-l), var(--gold));
+}
+.sb-modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 700; color: var(--white); margin-bottom: 20px;
+}
+.sb-modal .fg { margin-bottom: 14px; }
+.sb-modal .fg label {
+  display: block; font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--gray); margin-bottom: 6px;
+}
+.sb-modal .fg input, .sb-modal .fg select, .sb-modal .fg textarea {
+  width: 100%; background: rgba(9,15,30,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--white); padding: 11px 13px;
+  font-family: 'Barlow', sans-serif; font-size: 0.88rem;
+  border-radius: 2px; outline: none; transition: border-color 0.2s;
+}
+.sb-modal .fg input:focus, .sb-modal .fg select:focus,
+.sb-modal .fg textarea:focus { border-color: var(--gold); }
+.sb-modal .fg select option { background: var(--navy-mid); }
+.sb-modal .fg textarea { height: 70px; resize: vertical; }
+.sb-modal-btns { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+.sb-modal-cancel {
+  background: transparent; border: 1px solid rgba(255,255,255,0.1);
+  color: var(--gray); padding: 9px 20px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.88rem;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  border-radius: 2px; cursor: pointer; transition: all 0.18s;
+}
+.sb-modal-cancel:hover { border-color: var(--gray); color: var(--white); }
+.sb-modal-save {
+  background: var(--gold); color: var(--navy); padding: 9px 24px; border: none;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.88rem;
+  font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  border-radius: 2px; cursor: pointer; transition: background 0.18s;
+}
+.sb-modal-save:hover { background: var(--gold-l); }
+
+
+.client-picker { display:flex; flex-direction:column; gap:6px; max-height:200px; overflow-y:auto; margin-bottom:4px; }
+.client-option {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border:1px solid rgba(255,255,255,0.07);
+  border-radius:2px; cursor:pointer; transition:all 0.15s;
+  background:rgba(9,15,30,0.5);
+}
+.client-option:hover { border-color: var(--gold); background:rgba(201,160,48,0.06); }
+.client-option.selected { border-color: var(--gold); background:rgba(201,160,48,0.1); }
+.client-option-name { font-size:0.88rem; font-weight:600; color:var(--white); flex:1; }
+.client-option-count { font-size:0.7rem; color:var(--gray); }
+.no-clients-msg { padding:16px; text-align:center; color:var(--gray); font-size:0.82rem; line-height:1.6; }
+
+@media(max-width: 900px) { #mainContent { padding: 24px 16px; } }
+
+
+
+.co-bar {
+  padding: 10px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.co-bar.co-ok   { background: rgba(82,192,122,0.04); }
+.co-bar.co-warn { background: rgba(224,82,82,0.06); border-top-color: rgba(224,82,82,0.15); border-left: 3px solid var(--red); }
+.co-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 2px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.co-badge.ok   { background: rgba(82,192,122,0.12); border: 1px solid rgba(82,192,122,0.3); color: var(--green); }
+.co-badge.warn { background: rgba(224,82,82,0.12);  border: 1px solid rgba(224,82,82,0.3);  color: var(--red); }
+.co-detail { font-size: 0.76rem; color: var(--gray); }
+.co-link {
+  margin-left: auto; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--gold); text-decoration: none;
+  border-bottom: 1px dashed rgba(201,160,48,0.3); flex-shrink: 0;
+}
+.co-link:hover { border-bottom-color: var(--gold); }
+
+
+.bp-entities {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 0;
+}
+.bp-entities-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; cursor: pointer;
+  transition: background 0.15s; user-select: none;
+}
+.bp-entities-header:hover { background: rgba(255,255,255,0.02); }
+.bp-entities-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.65rem; font-weight: 800;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--gray);
+}
+.bp-entities-count {
+  font-size: 0.68rem; color: var(--gray);
+  background: rgba(138,155,184,0.1);
+  border: 1px solid rgba(138,155,184,0.12);
+  padding: 1px 8px; border-radius: 10px;
+}
+.bp-entities-arrow {
+  margin-left: auto; font-size: 9px; color: var(--gray);
+  transition: transform 0.18s;
+}
+.bp-entities-arrow.open { transform: rotate(180deg); }
+.bp-entities-list {
+  display: none; padding: 4px 0 10px;
+}
+.bp-entities-list.open { display: block; }
+.bp-entity-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 7px 20px; transition: background 0.12s;
+}
+.bp-entity-row:hover { background: rgba(255,255,255,0.02); }
+.bp-entity-icon {
+  font-size: 0.85rem; flex-shrink: 0; width: 20px; text-align: center;
+}
+.bp-entity-name {
+  font-size: 0.82rem; font-weight: 600; color: var(--white);
+  flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bp-entity-role {
+  font-size: 0.68rem; color: var(--gray);
+  background: rgba(138,155,184,0.08);
+  border: 1px solid rgba(138,155,184,0.1);
+  padding: 2px 8px; border-radius: 2px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.bp-entity-role.hpd  { background: rgba(82,192,122,0.08); border-color: rgba(82,192,122,0.15); color: var(--green); }
+.bp-entity-role.dca  { background: rgba(201,160,48,0.08); border-color: rgba(201,160,48,0.15); color: var(--gold); }
+.bp-entity-role.agent{ background: rgba(101,149,224,0.08); border-color: rgba(101,149,224,0.15); color: #6595e0; }
+.bp-entities-loading {
+  padding: 10px 20px; font-size: 0.75rem; color: var(--gray);
+}
+
+
+.warn-card{background:rgba(224,82,82,0.06);border:1px solid rgba(224,82,82,0.3);border-left:4px solid var(--red);padding:16px 20px;margin-bottom:8px}
+.warn-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.warn-badge{font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:var(--red);color:var(--white);padding:3px 10px;border-radius:2px;white-space:nowrap}
+.warn-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:var(--white)}
+.warn-date{font-size:0.75rem;color:var(--gray);margin-left:auto}
+.warn-desc{font-size:0.82rem;color:var(--text);line-height:1.5;margin-bottom:6px}
+.warn-status{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:2px}
+.warn-active{background:rgba(224,82,82,0.15);color:var(--red)}
+.warn-resolved{background:rgba(82,192,122,0.15);color:var(--green)}
+
+
+.resolved-toggle{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;background:rgba(9,15,30,0.3);border-top:1px solid rgba(138,155,184,0.08);font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gray);user-select:none;transition:all 0.18s}
+.resolved-toggle:hover{background:rgba(82,192,122,0.05);color:var(--green);border-top-color:rgba(82,192,122,0.15)}
+.resolved-toggle .rt-dot{width:6px;height:6px;border-radius:50%;background:var(--green);opacity:0.4;flex-shrink:0;transition:opacity 0.18s}
+.resolved-toggle:hover .rt-dot{opacity:0.8}
+.resolved-toggle .rt-count{background:rgba(82,192,122,0.08);border:1px solid rgba(82,192,122,0.15);color:var(--green);padding:1px 8px;border-radius:10px;font-size:0.68rem;font-weight:700}
+.resolved-toggle .rt-label{flex:1}
+.resolved-toggle .rt-arrow{font-size:9px;transition:transform 0.2s;color:var(--green);opacity:0.6}
+.resolved-toggle.open .rt-arrow{transform:rotate(180deg);opacity:1}
+
+
+.owed-box{background:rgba(224,82,82,0.07);border:1px solid rgba(224,82,82,0.25);border-left:4px solid var(--red);padding:16px 22px;margin-bottom:16px;display:flex;gap:40px;flex-wrap:wrap;align-items:center}
+.owed-label{font-size:0.62rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray);margin-bottom:3px}
+.owed-val{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:800;line-height:1}
+.owed-val.bad{color:var(--red)}
+.owed-val.ok{color:var(--green)}
+.owed-val.warn{color:var(--orange)}
+
+@media print {
+  
+  body::before {
+    content: "GOLD COAST COMPLIANCE  |  Internal Property Report  |  goldcoastcompliance.com  |  daniel@goldcoastcomp.com";
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #888 !important;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6pt;
+    margin-bottom: 12pt;
+    width: 100%;
+  }
+  
+  @page {
+    margin: 0.75in;
+    @bottom-center {
+      content: "Gold Coast Compliance  |  goldcoastcomp.com  |  516-226-0483  |  Confidential — Do Not Distribute";
+      font-size: 8pt;
+      color: #aaa;
+    }
+  }
+  
+  body::after {
+    content: "GOLD COAST COMPLIANCE";
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 72pt;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: rgba(0,0,0,0.04) !important;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  
+  #sidebar, #sbToggleBtn, #printBtn, #saveLocBtn, .bin-portals,
+  .mode-tabs, #panel-addr, #panel-bin, #panel-viol, .tip, #bar,
+  .resolved-toggle, .chv, .ahead button, #warningsPanel .co-link { display: none !important; }
+
+  
+  #appWrap { display: block !important; }
+  #mainContent { padding: 16px !important; max-width: 100% !important; }
+  body { background: #fff !important; color: #111 !important; }
+
+  
+  header { background: #fff !important; border-bottom: 2px solid #111 !important; padding: 8px 16px !important; }
+  .logo { color: #111 !important; }
+  .logo span { color: #7a5c00 !important; }
+  .vbadge, .hbadge { border: 1px solid #ccc !important; color: #555 !important; background: #fff !important; }
+
+  
+  * { color: #111 !important; text-shadow: none !important; }
+  .sc-n, .bin-val, .atag, .aname { color: #111 !important; } .atag-HPD,.atag-DOB,.atag-ECB,.atag-FDNY,.atag-DSNY,.atag-311,.atag-JOBS,.atag-OATH { color: #111 !important; }
+
+  
+  #buildingProfile { display: block !important; background: #fff !important; border: 1px solid #ccc !important; margin-bottom: 12px; page-break-inside: avoid; }
+  #buildingProfile::before { display: none; }
+  .bp-grid { background: #fff !important; }
+  .bp-stat { background: #f9f9f9 !important; border: 1px solid #e0e0e0 !important; padding: 8px 12px !important; }
+  .bp-stat-val { font-size: 13px !important; }
+  .bp-entities-list { display: block !important; }
+  .co-bar { background: #f9f9f9 !important; }
+
+  
+  #binBanner { display: flex !important; background: #f5f5f5 !important; border: 1px solid #ccc !important;
+               padding: 10px 16px !important; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  #binBanner .bin-val { font-size: 18px !important; color: #7a5c00 !important; }
+
+  
+  #sumRow { display: grid !important; background: #fff !important; margin-bottom: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important; gap: 4px !important; }
+  .sc { background: #f9f9f9 !important; border: 1px solid #e0e0e0 !important; padding: 8px 10px !important; }
+  .sc-n { font-size: 18px !important; }
+  .sc-n.z { color: #2a7a2a !important; }
+
+  
+  .ablock { border: 1px solid #ddd !important; background: #fff !important;
+            margin-bottom: 6px; page-break-inside: avoid; }
+  .ahead { background: #f5f5f5 !important; padding: 8px 14px !important; }
+  .atbl { display: block !important; overflow: visible !important; max-height: none !important; }
+  .tscroll { overflow: visible !important; max-height: none !important; }
+
+  
+  table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+  th { background: #eeeeee !important; padding: 4px 6px !important;
+       border: 1px solid #ccc !important; font-size: 8.5px; text-transform: uppercase; }
+  td { padding: 3px 6px !important; border: 1px solid #e8e8e8 !important;
+       word-break: break-word; max-width: 200px; }
+  tr.resolved-row { display: none !important; }
+
+  
+  #warningsPanel { display: block !important; margin-bottom: 12px; }
+  .warn-card { background: #fff8f8 !important; border: 1px solid #e0a0a0 !important;
+               border-left: 3px solid #c00 !important; }
+  .warn-badge { background: #c00 !important; color: #fff !important; }
+
+  
+  .owed-box { background: #fff8f8 !important; border: 1px solid #e0a0a0 !important; }
+
+  @page { margin: 1.5cm; size: A4 portrait; }
+}
+.sb-prop-notes { font-size:0.65rem; color:rgba(138,155,184,0.5); margin-top:1px; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.sc-hi-red    { color: #f87171 !important; }
+.sc-hi-orange { color: #f97316 !important; }
+.sc-hi-gold   { color: var(--gold) !important; }
+
+
+.landmark-bar {
+  padding: 8px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(139,92,246,0.06);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.lm-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 2px;
+  background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.35);
+  color: #c4b5fd; white-space: nowrap;
+}
+.lm-badge.lm-hist {
+  background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.35);
+  color: #a5b4fc;
+}
+.lm-detail { font-size: 0.76rem; color: var(--gray); }
+
+
+.tax-lien-warn {
+  margin-bottom: 10px;
+  padding: 10px 20px;
+  background: rgba(224,82,82,0.07);
+  border: 1px solid rgba(224,82,82,0.25);
+  border-left: 3px solid var(--red);
+  border-radius: 4px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.tl-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 2px;
+  background: rgba(224,82,82,0.15); border: 1px solid rgba(224,82,82,0.35);
+  color: #f87171; white-space: nowrap;
+}
+.tl-detail { font-size: 0.76rem; color: var(--gray); }
+
+.own-panel{border-top:1px solid rgba(255,255,255,0.06);background:var(--navy)}
+.own-header{padding:10px 20px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.own-header:hover{background:rgba(255,255,255,0.03)}
+.own-label{font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray)}
+.own-chevron{font-size:0.65rem;color:var(--gray);margin-left:auto;transition:transform 0.2s}
+.own-chevron.open{transform:rotate(180deg)}
+.own-body{display:none;padding:4px 20px 16px;gap:16px}
+.own-body.open{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.own-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:12px 14px}
+.own-card-type{font-size:0.62rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.own-card-name{font-size:0.88rem;font-weight:600;color:var(--white);margin-bottom:4px;line-height:1.3}
+.own-card-addr{font-size:0.75rem;color:var(--gray);line-height:1.5}
+
+
+#intelPanel{display:none;margin-bottom:20px}
+#intelPanel.on{display:block}
+.intel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:10px}
+.intel-card{background:var(--navy-mid);border:1px solid var(--border);padding:13px 15px;position:relative;overflow:hidden}
+.intel-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:rgba(201,160,48,.45)}
+.intel-label{font-size:.58rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin-bottom:5px}
+.intel-val{font-family:'Barlow Condensed',sans-serif;font-size:1.45rem;font-weight:800;color:var(--white);line-height:1}
+.intel-sub{font-size:.68rem;color:var(--gray);margin-top:4px;line-height:1.35}
+.health-box{background:var(--navy-mid);border:1px solid var(--border);padding:16px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.health-box.red{border-color:rgba(224,82,82,.42);background:rgba(224,82,82,.06)}
+.health-box.orange{border-color:rgba(224,148,82,.38);background:rgba(224,148,82,.05)}
+.health-box.green{border-color:rgba(82,192,122,.35);background:rgba(82,192,122,.04)}
+.health-badge{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:4px 12px;border-radius:2px;background:rgba(201,160,48,.12);color:var(--gold);border:1px solid rgba(201,160,48,.25)}
+.health-box.red .health-badge{background:rgba(224,82,82,.14);color:var(--red);border-color:rgba(224,82,82,.35)}
+.health-box.orange .health-badge{background:rgba(224,148,82,.14);color:var(--orange);border-color:rgba(224,148,82,.35)}
+.health-box.green .health-badge{background:rgba(82,192,122,.12);color:var(--green);border-color:rgba(82,192,122,.35)}
+.health-copy{font-size:.82rem;color:var(--text);line-height:1.45;flex:1;min-width:240px}
+.action-box{background:rgba(224,82,82,.05);border:1px solid rgba(224,82,82,.25);border-left:4px solid var(--red);padding:15px 18px;margin-bottom:10px}
+.action-title,.intel-title{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.action-list{display:grid;gap:7px}
+.action-item{font-size:.82rem;line-height:1.45;color:var(--text);display:flex;gap:8px;align-items:flex-start}
+.action-item .mark{font-weight:900;line-height:1.2}.mark.red{color:var(--red)}.mark.orange{color:var(--orange)}.mark.green{color:var(--green)}
+.timeline-box,.issue-box,.fresh-box{background:var(--navy-mid);border:1px solid var(--border);padding:15px 18px;margin-bottom:10px}.intel-drop .timeline-box,.intel-drop .issue-box{border:none;margin-bottom:0}
+.timeline-list{display:grid;gap:7px;max-height:280px;overflow:auto;padding-right:4px}
+.timeline-row{display:grid;grid-template-columns:86px 58px 1fr;gap:10px;align-items:start;font-size:.76rem;border-bottom:1px solid rgba(255,255,255,.04);padding-bottom:7px}
+.timeline-date{color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-weight:800;white-space:nowrap}.timeline-src{color:var(--gray);font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.timeline-text{color:var(--text);line-height:1.35}
+.group-list{display:grid;gap:6px}.group-row{display:flex;justify-content:space-between;gap:10px;font-size:.78rem;color:var(--text);padding:7px 10px;background:rgba(9,15,30,.35);border:1px solid rgba(255,255,255,.04)}.group-count{font-family:'Barlow Condensed',sans-serif;font-weight:800;color:var(--gold);white-space:nowrap}
+.aging-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}.age-bucket{background:rgba(9,15,30,.42);border:1px solid rgba(255,255,255,.05);padding:9px;text-align:center}.age-bucket .n{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;color:var(--gold)}.age-bucket .l{font-size:.58rem;color:var(--gray);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.fresh-list{display:flex;gap:8px;flex-wrap:wrap}.fresh-pill{font-size:.68rem;border:1px solid rgba(138,155,184,.16);background:rgba(138,155,184,.06);color:var(--gray);padding:4px 8px;border-radius:2px}.fresh-pill strong{color:var(--gold)}
+.sb-prop-health{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;background:rgba(138,155,184,.35)}.sb-prop-health.red{background:var(--red);box-shadow:0 0 8px rgba(224,82,82,.5)}.sb-prop-health.orange{background:var(--orange);box-shadow:0 0 8px rgba(224,148,82,.45)}.sb-prop-health.green{background:var(--green);box-shadow:0 0 8px rgba(82,192,122,.45)}
+@media(max-width:760px){.timeline-row{grid-template-columns:78px 50px 1fr}.aging-bar{grid-template-columns:repeat(2,1fr)}}
+
+
+ WORKFLOW ADDITIONS ── */
+.tooltip{position:relative;cursor:help;border-bottom:1px dashed rgba(201,160,48,.45)}
+.tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:125%;left:0;background:var(--navy);color:var(--white);padding:7px 10px;font-size:.7rem;border:1px solid var(--border);white-space:nowrap;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.28);font-family:'Barlow',sans-serif;font-weight:500;letter-spacing:0;text-transform:none}
+.confidence-box,.missing-box,.session-box{background:var(--navy-mid);border:1px solid var(--border);padding:13px 15px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.confidence-box.green{border-color:rgba(82,192,122,.35);background:rgba(82,192,122,.04)}
+.confidence-box.orange{border-color:rgba(224,148,82,.38);background:rgba(224,148,82,.05)}
+.confidence-box.red{border-color:rgba(224,82,82,.38);background:rgba(224,82,82,.05)}
+.confidence-badge{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border-radius:2px;border:1px solid rgba(201,160,48,.25);color:var(--gold);background:rgba(201,160,48,.10)}
+.confidence-box.green .confidence-badge{color:var(--green);border-color:rgba(82,192,122,.35);background:rgba(82,192,122,.10)}
+.confidence-box.orange .confidence-badge{color:var(--orange);border-color:rgba(224,148,82,.35);background:rgba(224,148,82,.10)}
+.confidence-box.red .confidence-badge{color:var(--red);border-color:rgba(224,82,82,.35);background:rgba(224,82,82,.10)}
+.confidence-copy,.missing-copy{font-size:.78rem;color:var(--text);line-height:1.4}
+.missing-box{border-color:rgba(224,148,82,.28);background:rgba(224,148,82,.045);align-items:flex-start}
+.missing-list{display:grid;gap:5px;font-size:.76rem;color:var(--text);line-height:1.35}
+.missing-list div::before{content:'⚠ ';color:var(--orange);font-weight:800}
+.last-search-chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:.7rem;color:var(--gray);border:1px solid rgba(138,155,184,.15);background:rgba(138,155,184,.06);padding:5px 8px;border-radius:2px}
+.sb-meta-badge{font-size:.58rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:8px;background:rgba(201,160,48,.10);border:1px solid rgba(201,160,48,.16);color:var(--gold);white-space:nowrap;margin-top:2px;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:14px">
+    <button id="sbToggleBtn" onclick="toggleSidebar()" title="Toggle client sidebar"
+      style="background:none;border:none;cursor:pointer;padding:4px 6px;
+             color:var(--gray);font-size:1.25rem;line-height:1;
+             border-radius:2px;transition:color 0.18s;flex-shrink:0">
+      ☰
+    </button>
+    <div class="logo">Gold Coast <span>Compliance</span></div>
+  </div>
+  <div class="header-right">
+    <div class="hbadge">Internal Lookup Tool</div>
+    <div class="vbadge">V15.5</div>
+  </div>
+</header>
+
+<div id="appWrap" style="display:flex;min-height:calc(100vh - 64px);justify-content:center">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+  <div class="sb-header">
+    <div class="sb-title">📁 Clients</div>
+    <input class="sb-search" id="sbSearch" type="text" placeholder="Search clients & properties…"
+           oninput="scheduleSidebarRender()"/>
+    <button class="sb-add-btn" onclick="openClientModal()">+ Add Client</button>
+  </div>
+  <div id="sbList"></div>
+</div>
+
+  <!-- MAIN CONTENT -->
+  <div id="mainContent">
+  <div class="card">
+    <div class="card-title">Property Violation Lookup</div>
+    <div class="card-sub">Search by address or BIN — HPD, DOB, ECB/OATH, DSNY, FDNY & 311.</div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" onclick="setMode('addr')">By Address</button>
+      <button class="mode-tab" onclick="setMode('bin')">By BIN</button>
+      <button class="mode-tab" onclick="setMode('viol')">By Violation #</button>
+    </div>
+
+    <!-- ADDRESS MODE -->
+    <div class="search-panel active" id="panel-addr">
+      <div class="addr-grid">
+        <div class="fg">
+          <label>House #</label>
+          <input id="houseNo" type="text" placeholder="1038" onkeydown="if(event.key==='Enter')go()"/>
+        </div>
+        <div class="fg">
+          <label>Street Name</label>
+          <input id="street" type="text" placeholder="White Plains Road" onkeydown="if(event.key==='Enter')go()"/>
+        </div>
+        <div class="fg">
+          <label>Borough</label>
+          <select id="boro">
+            <option value="MANHATTAN">Manhattan</option>
+            <option value="BRONX">Bronx</option>
+            <option value="BROOKLYN">Brooklyn</option>
+            <option value="QUEENS">Queens</option>
+            <option value="STATEN ISLAND">Staten Island</option>
+          </select>
+        </div>
+        <button class="sbtn" id="sbtn-addr" onclick="go()" style="align-self:end">Search</button>
+      </div>
+      <div style="margin-top:10px;font-size:0.75rem;color:var(--gray)">Address search pulls HPD, DOB (Legacy & Safety), ECB, DSNY, FDNY & 311.</div>
+    </div>
+
+    <!-- VIOLATION / SUMMONS SEARCH PANEL -->
+    <div class="search-panel" id="panel-viol">
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;max-width:600px">
+        <div class="fg">
+          <label>Violation / Summons Number</label>
+          <input id="violNum" type="text" placeholder="e.g. 039182003Z or 34493100R"
+                 onkeydown="if(event.key==='Enter')go()"
+                 style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:0.08em"/>
+        </div>
+        <button class="sbtn" id="sbtn-viol" onclick="go()" style="align-self:end">Search</button>
+      </div>
+      <div style="margin-top:10px;font-size:0.75rem;color:var(--gray);line-height:1.6">
+        Searches ECB/OATH (by both summons # and ECB #), DOB Legacy BIS, DOB Safety (DOB NOW), and HPD simultaneously. Also opens OATH Summons Finder automatically. For FDNY violations use the BIN or Address search.
+      </div>
+    </div>
+
+    <!-- BIN MODE -->
+    <div class="search-panel" id="panel-bin">
+      <div class="bin-grid">
+        <div class="fg">
+          <label>Building Identification Number (BIN)</label>
+          <input id="binInput" type="text" class="bin-input" placeholder="e.g. 2012345"
+                 maxlength="7" oninput="this.value=this.value.replace(/\D/g,'')"
+                 onkeydown="if(event.key==='Enter')go()"/>
+        </div>
+        <button class="sbtn" id="sbtn-bin" onclick="go()" style="align-self:end">Search</button>
+      </div>
+      <div style="margin-top:10px;font-size:0.75rem;color:var(--gray)">BIN search queries all datasets directly — most accurate method. 311 records are address-based and cannot be filtered by BIN.</div>
+    </div>
+  </div>
+
+  <!-- BUILDING PROFILE PANEL — populated after BIN is found -->
+  <div id="buildingProfile">
+    <div class="bp-loading"><div class="spin"></div><span>Loading building information…</span></div>
+  </div>
+
+  <div class="tip">
+    <span>💡</span>
+    <span><strong>Tips:</strong> Spell out full street names ("WHITE PLAINS ROAD" not "WPR"). Click the BIN to copy it to clipboard.</span>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       ⚠ CRITICAL WARNINGS PANEL
+       Appears at top of results if Stop Work Orders
+       or Orders to Vacate are found. Fetched from:
+         Stop Work Orders: 3usq-5cid (DOB dataset)
+         HPD Vacate Orders: tb8q-a3ar (HPD dataset)
+       Also scans DOB Legacy results for violationtypecode='V'
+       ══════════════════════════════════════════════ -->
+  <div id="warningsPanel" style="display:none;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.65rem;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--red)">⚠ Critical Warnings</div>
+      <div style="flex:1;height:1px;background:rgba(224,82,82,0.25)"></div>
+      <div id="warningsCount" style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;color:var(--red);background:rgba(224,82,82,0.1);border:1px solid rgba(224,82,82,0.3);padding:2px 10px;border-radius:2px"></div>
+    </div>
+    <div id="warningsList"></div>
+  </div>
+
+  <!-- INTELLIGENCE / DECISION DASHBOARD -->
+  <div id="intelPanel" style="display:none;margin-bottom:20px">
+    <div id="healthPanel"></div>
+    <div id="confidencePanel"></div>
+    <div id="missingDataPanel"></div>
+    <div id="actionPanel"></div>
+    <div id="agingPanel"></div>
+    <div id="ecbInsightPanel"></div>
+    <div id="dobInsightPanel"></div>
+    <div id="issueGroupPanel"></div>
+    <div id="timelinePanel"></div>
+    <div id="freshnessPanel"></div>
+  </div>
+
+  <!-- BIN BANNER -->
+  <div id="binBanner">
+    <div>
+      <div class="bin-label">Building Identification Number — click to copy</div>
+      <div>
+        <span class="bin-val" id="binVal" onclick="copyBIN()" title="Click to copy">—</span>
+        <span class="bin-copied" id="binCopied">✓ Copied</span>
+      </div>
+    </div>
+    <div class="bin-portals" id="binPortals"></div>
+    <button onclick="printReport()" id="printBtn"
+      style="background:rgba(138,155,184,0.1);border:1px solid rgba(138,155,184,0.2);
+             color:var(--gray);padding:6px 14px;font-family:'Barlow Condensed',sans-serif;
+             font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+             border-radius:2px;cursor:pointer;white-space:nowrap;transition:all 0.18s;flex-shrink:0">
+      ⎙ Print Report
+    </button>
+
+  </div>
+
+  <div id="bar"><div class="spin" id="spin"></div><span id="barTxt">Searching…</span></div>
+  <div id="sumRow"></div>
+  <div id="results">
+    <div id="empty">
+      <div class="big">NYC</div>
+      <p>Enter an address or BIN above to pull violations across all major NYC agencies.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ── CONSTANTS ──────────────────────────────────────────────────────────────
+const BASE = 'https://data.cityofnewyork.us/resource/';
+const BORO_NUM = {
+  MANHATTAN:'1', 'NEW YORK':'1', 'MN':'1',
+  BRONX:'2', 'THE BRONX':'2', 'BX':'2',
+  BROOKLYN:'3', 'KINGS':'3', 'BK':'3',
+  QUEENS:'4', 'QN':'4', 'QU':'4',
+  'STATEN ISLAND':'5', 'RICHMOND':'5', 'SI':'5', 'STATEN IS':'5'
+};
+function bn(b){return BORO_NUM[b]||'1';}
+function enc(s){return encodeURIComponent(s);}
+const APP_TOKEN = 'KXKwivqAkW9bNlv1NoEIvVq2h';
+const TOKEN_HEADER = {'X-App-Token': APP_TOKEN};
+function up(s){return s.trim().toUpperCase();}
+function htmlEsc(v){return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
+function jsEsc(v){return String(v ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+
+// SoQL $where with upper() — case-insensitive exact match
+function where(hf,sf,h,s){
+  const c=[];
+  if(h) c.push(`upper(${hf})='${h.replace(/'/g,"''")}'`);
+  if(s) c.push(`upper(${sf})='${s.replace(/'/g,"''")}'`);
+  return c.join(' AND ');
+}
+
+let currentMode = 'addr';
+let foundBIN = null;
+let activeSearchId = 0;
+const autoFetched = new Set();
+let latestResults = {};
+function autoFetchKey(bin, id){ return bin+':'+id; }
+function isTransientFetchError(err){ return /(HTTP 429|HTTP 500|HTTP 502|HTTP 503|HTTP 504|timed out|Failed to fetch|NetworkError)/i.test(String(err||'')); }
+function isOptionalDataset(ds){ return ['dsny','fdny','s311','jobs_bis','jobs_now','permits_bis','permits_now','dob_complaints'].includes(ds?.id); }
+// Stores address-mode inputs so DOB Legacy can be re-queried once BIN is found
+
+function setMode(mode){
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach((t,i)=>{
+    t.classList.toggle('active',
+      (mode==='addr'&&i===0)||(mode==='bin'&&i===1)||(mode==='viol'&&i===2));
+  });
+  document.querySelectorAll('.search-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+mode).classList.add('active');
+}
+
+function copyBIN(){
+  if(!foundBIN) return;
+  navigator.clipboard.writeText(foundBIN).then(()=>{
+    const el=document.getElementById('binCopied');
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'),2000);
+  });
+}
+
+function showBIN(bin){
+  if(foundBIN||!bin) return;
+  foundBIN = bin;
+  document.getElementById('binVal').textContent = bin;
+  document.getElementById('binPortals').innerHTML = `
+    <a class="bp-btn" href="https://hpdonline.nyc.gov/hpdonline/building/search?BIN=${bin}" target="_blank">HPD Online ↗</a>
+    <a class="bp-btn" href="http://a810-bisweb.nyc.gov/bisweb/PropertyProfileOverviewServlet?bin=${bin}&go2=+GO+&requestid=0" target="_blank">DOB BIS ↗</a>
+    <a class="bp-btn bp-now" href="https://a810-dobnow.nyc.gov/publish/Index.html#!/" target="_blank" title="DOB NOW public portal — search by BIN or address after opening">DOB NOW ↗</a>
+    <a class="bp-fdny bp-btn" href="https://fires.fdnycloud.org/CitizenAccess/Default.aspx" target="_blank">FDNY Accela ↗</a>
+  `;
+  document.getElementById('binBanner').classList.add('on');
+  saveBINToProperty(bin);
+  fetchBuildingProfile(bin);
+}
+
+function extractBIN(rows){
+  for(const r of rows){
+    const b=r.bin||r.BIN||r.bin__||r.buildingid||r.building_id||r.gis_bin;
+    if(b&&String(b).match(/^\d{6,7}$/)) return String(b).padStart(7,'0');
+  }
+  return null;
+}
+
+// ── DATASET DEFINITIONS ──────────────────────────────────────────────────
+// byAddr(h,s,b) — address-mode URL. null = not supported by address.
+// byBIN(bin)    — BIN-mode URL. null = not supported by BIN (e.g. 311).
+const DSETS = [
+
+  // HPD Housing Violations (wvxf-dwi5)
+  // Address fields: housenumber, streetname, boroid | BIN field: bin
+  {
+    id:'hpd_v', tag:'HPD', name:'HPD — Housing Violations',
+    byAddr(h,s,b){ return `${BASE}wvxf-dwi5.json?$where=${enc(where('housenumber','streetname',h,s)+` AND boroid='${bn(b)}'`)}&$limit=100&$order=inspectiondate DESC`; },
+    fallbackAddr(h,s,b){ return `${BASE}wvxf-dwi5.json?housenumber=${enc(h)}&streetname=${enc(s)}&boroid=${enc(bn(b))}&$limit=100&$order=inspectiondate DESC`; },
+    byBIN(bin){    return `${BASE}wvxf-dwi5.json?$where=${enc(`bin='${bin}'`)}&$limit=100`; },
+    cols:['violationid','inspectiondate','class','novdescription','currentstatus','novissueddate'],
+    labels:['ID','Inspection','Class','Description','Status','NOV Date'],
+    sc:'currentstatus', ov:['OPEN','NOV ISSUED','VIOLATION OPEN']
   },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "connect-pg-simple": "^9.0.1",
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "pg": "^8.11.3",
-    "uuid": "^9.0.0"
+
+  // DOB Legacy Violations (3h2n-5cm9)
+  // Address fields unknown/unreliable — BIN only for this dataset.
+  // In address mode, this dataset is skipped initially then re-queried
+  // automatically once a BIN is extracted from other results.
+  {
+    id:'dob_v', tag:'DOB', name:'DOB — Building Violations (Legacy BIS)',
+    byAddr(h,s,b){ return null; },
+    byBIN(bin){    return `${BASE}3h2n-5cm9.json?$where=${enc(`bin='${bin}'`)}&$limit=100`; },
+    binOnly: true,
+    cols:['violation_number','isn_dob_bis_viol','issue_date','violation_type_code','description','violation_category'],
+    labels:['Violation #','BIS #','Issue Date','Type','Description','Category'],
+    sc:'violation_category', ov:['V-DOB VIOLATION - ACTIVE']
   },
-  "devDependencies": {
-    "nodemon": "^3.0.2"
+
+  // DOB Safety Violations / DOB NOW (855j-jady)
+  // Address fields: house_number, street, borough (name e.g. "BRONX")
+  // BIN field: bin
+  {
+    id:'dob_safe', tag:'DOB', name:'DOB — Safety Violations (DOB NOW)',
+    byAddr(h,s,b){ return `${BASE}855j-jady.json?$where=${enc(where('house_number','street',h,s)+` AND upper(borough)='${b.replace(/'/g,"''")}'`)}&$limit=100`; },
+    fallbackAddr(h,s,b){ return `${BASE}855j-jady.json?house_number=${enc(h)}&street=${enc(s)}&borough=${enc(b)}&$limit=100`; },
+    byBIN(bin){    return `${BASE}855j-jady.json?$where=${enc(`bin='${bin}'`)}&$limit=100`; },
+    cols:['bin','violation_issue_date','violation_number','violation_type','violation_remarks','violation_status'],
+    labels:['BIN','Issue Date','Violation #','Type','Remarks','Status'],
+    sc:'violation_status', ov:['ACTIVE','OPEN']
   },
-  "engines": {
-    "node": ">=18.0.0"
+
+  // ECB / OATH Violations (6bgk-3dad)
+  // Address fields: respondent_house_number, respondent_street, boro (numeric)
+  // BIN field: bin
+  // ECB violation numbers → OATH Summons Finder links
+  {
+    id:'ecb', tag:'ECB', name:'ECB / OATH — Summonses',
+    byAddr(h,s,b){ return `${BASE}6bgk-3dad.json?$where=${enc(where('respondent_house_number','respondent_street',h,s)+` AND boro='${bn(b)}'`)}&$limit=100&$order=issue_date DESC`; },
+    byBIN(bin){    return `${BASE}6bgk-3dad.json?$where=${enc(`bin='${bin}'`)}&$limit=100`; },
+    cols:['ecb_violation_number','issue_date','violation_type','respondent_name','hearing_date','ecb_violation_status','penalty_imposed','amount_paid','balance_due'],
+    labels:['ECB #','Issue Date','Type','Respondent','Hearing Date','Status','Penalty','Paid','Balance Due'],
+    sc:'ecb_violation_status', ov:['ACTIVE','OPEN','PENDING','NOT CERTIFIED'],
+    penaltyCol:'penalty_imposed', paidCol:'amount_paid', balanceCol:'balance_due',
+    oathCol:'ecb_violation_number'
+  },
+
+  // 311 → DSNY (erm2-nwe9) — no BIN field in 311
+  {
+    id:'dsny', tag:'DSNY', name:'DSNY — Sanitation (311)',
+    byAddr(h,s,b){ return `${BASE}erm2-nwe9.json?agency=DSNY&incident_address=${enc(up(h+' '+s))}&borough=${enc(b)}&$limit=100&$order=created_date DESC`; },
+    fallbackAddr(h,s,b){ return `${BASE}erm2-nwe9.json?agency=DSNY&incident_address=${enc(up(h+' '+s))}&borough=${enc(b)}&$limit=50`; },
+    byBIN(){ return null; },
+    cols:['unique_key','created_date','complaint_type','descriptor','status','closed_date'],
+    labels:['SR #','Created','Type','Descriptor','Status','Closed'],
+    sc:'status', ov:['Open','In Progress','Assigned','Pending']
+  },
+
+  // 311 → FDNY (erm2-nwe9)
+  {
+    id:'fdny', tag:'FDNY', name:'FDNY — Fire Complaints (311)',
+    byAddr(h,s,b){ return `${BASE}erm2-nwe9.json?agency=FDNY&incident_address=${enc(up(h+' '+s))}&borough=${enc(b)}&$limit=100&$order=created_date DESC`; },
+    fallbackAddr(h,s,b){ return `${BASE}erm2-nwe9.json?agency=FDNY&incident_address=${enc(up(h+' '+s))}&borough=${enc(b)}&$limit=50`; },
+    byBIN(){ return null; },
+    cols:['unique_key','created_date','complaint_type','descriptor','status','closed_date'],
+    labels:['SR #','Created','Type','Descriptor','Status','Closed'],
+    sc:'status', ov:['Open','In Progress','Assigned','Pending']
+  },
+
+  // ── DOB Job Filings — BIS Legacy (ic3t-wcy2) ─────────────────────────────
+  {
+    id:'jobs_bis', tag:'JOBS', name:'DOB — Job Filings (BIS)',
+    byAddr(h,s,b){ return `${BASE}ic3t-wcy2.json?$where=${enc(`house__='${h.replace(/'/g,"''")}' AND upper(street_name) like '%${s.replace(/'/g,"''").toUpperCase()}%'`)}&$limit=50`; },
+
+    byBIN(bin){    return `${BASE}ic3t-wcy2.json?$where=${enc(`bin__='${bin}'`)}&$limit=50`; },
+    cols:['job__','job_type','job_status_descrp','latest_action_date','building_type','existing_occupancy'],
+    labels:['Job #','Type','Status','Latest Action','Bldg Type','Occupancy'],
+    sc:'job_status_descrp', ov:['IN PROGRESS','PLAN EXAM','OBJECTION','ON HOLD','INCOMPLETE','PARTIALLY COMPLETE']
+  },
+
+  // ── DOB Job Filings — DOB NOW (w9ak-ipjd) ───────────────────────────────
+  {
+    id:'jobs_now', tag:'JOBS', name:'DOB — Job Filings (DOB NOW)',
+    byAddr(h,s,b){ return `${BASE}w9ak-ipjd.json?$where=${enc(`house_no='${h.replace(/'/g,"''")}' AND upper(street_name) like '%${s.replace(/'/g,"''").toUpperCase()}%'`)}&$limit=50`; },
+
+    byBIN(bin){    return `${BASE}w9ak-ipjd.json?$where=${enc(`bin='${bin}'`)}&$limit=50`; },
+    cols:['job_filing_number','job_type','filing_status','filing_date','building_type'],
+    labels:['Filing #','Job Type','Status','Filed','Bldg Type'],
+    sc:'filing_status', ov:['IN PROGRESS','ACTIVE','PLAN EXAM','OBJECTION','ON HOLD','INCOMPLETE','PARTIALLY COMPLETE']
+  },
+
+
+  // ── DOB Complaints (eabe-havv) — BIN only ───────────────────────────────
+  {
+    id:'dob_complaints', tag:'DOB', name:'DOB — Complaints',
+    byAddr(h,s,b){ return null; },
+    byBIN(bin){    return `${BASE}eabe-havv.json?$where=${enc(`bin='${bin}'`)}&$limit=100`; },
+    cols:['complaint_number','date_entered','complaint_category','unit','status','disposition_date','disposition_description'],
+    labels:['Complaint #','Date','Category','Unit','Status','Closed','Disposition'],
+    sc:'status', ov:['ACTIVE','OPEN','IN PROCESS']
+  },
+
+  // ── Active Permits BIS (ipu4-2q9a) — BIN only ──────────────────────────
+  {
+    id:'permits_bis', tag:'PRMT', name:'Permits — Active (BIS)',
+    byAddr(h,s,b){ return null; },
+    byBIN(bin){    return `${BASE}ipu4-2q9a.json?$where=${enc(`bin__='${bin}'`)}&$limit=100`; },
+    cols:['permit_si_no','job__','permit_type','item_description','filing_status','issuance_date','expiration_date','permittee_s_name'],
+    labels:['Permit #','Job #','Type','Description','Status','Issued','Expires','Permittee'],
+    sc:'filing_status', ov:['ACTIVE','IN PROCESS','ISSUED','RENEWAL']
+  },
+
+  // ── Active Permits NOW (w9ak-ipjd) — BIN only ───────────────────────────
+  {
+    id:'permits_now', tag:'PRMT', name:'Permits — Active (DOB NOW)',
+    byAddr(h,s,b){ return null; },
+    byBIN(bin){    return `${BASE}w9ak-ipjd.json?$where=${enc(`bin='${bin}'`)}&$limit=100`; },
+    cols:['job_filing_number','work_type','filing_status','latest_action_date','building_type'],
+    labels:['Filing #','Work Type','Status','Latest Action','Bldg Type'],
+    sc:'filing_status', ov:['IN PROGRESS','ACTIVE','PLAN EXAM','OBJECTION','ON HOLD']
+  },
+
+  // 311 — All agencies (erm2-nwe9)
+  {
+    id:'s311', tag:'311', name:'311 — All Service Requests',
+    byAddr(h,s,b){ return `${BASE}erm2-nwe9.json?incident_address=${enc(up(h+' '+s))}&borough=${enc(b)}&$limit=150&$order=created_date DESC`; },
+    fallbackAddr(h,s,b){ return `${BASE}erm2-nwe9.json?incident_address=${enc(up(h+' '+s))}&borough=${enc(b)}&$limit=75`; },
+    byBIN(){ return null; },
+    cols:['unique_key','created_date','agency','complaint_type','status','closed_date'],
+    labels:['SR #','Created','Agency','Type','Status','Closed'],
+    sc:'status', ov:['Open','In Progress','Assigned','Pending']
+  }
+];
+
+
+// ── VIOLATION SEARCH DATASETS ─────────────────────────────────────────────
+// All queried simultaneously — no agency selection needed.
+// The number is searched across every relevant field in every dataset.
+// ECB dataset has penalty/balance fields for amount-owed display.
+const VDSETS_ALL = [
+
+  // ECB/OATH — try BOTH ecb_violation_number AND isn_dob_bis_extract
+  // isn_dob_bis_extract stores the DOB summons number (e.g. 039182003Z)
+  // ecb_violation_number stores the ECB hearing number (e.g. 34493100R)
+  {
+    id:'ecb_by_ecbnum', tag:'ECB', name:'ECB / OATH — by ECB Violation #',
+    byViol(n){ return `${BASE}6bgk-3dad.json?$where=${enc(`upper(ecb_violation_number)='${n.replace(/'/g,"''").toUpperCase()}'`)}&$limit=10`; },
+    cols:['ecb_violation_number','isn_dob_bis_extract','issue_date','violation_type','violation_description','hearing_date','ecb_violation_status','penalty_imposed','amount_paid','balance_due'],
+    labels:['ECB #','DOB Summons #','Issue Date','Type','Description','Hearing Date','Status','Penalty','Paid','Balance Due'],
+    sc:'ecb_violation_status', ov:['ACTIVE','OPEN','PENDING','NOT CERTIFIED'],
+    penaltyCol:'penalty_imposed', paidCol:'amount_paid', balanceCol:'balance_due',
+    oathCol:'ecb_violation_number'
+  },
+  {
+    id:'ecb_by_dobnum', tag:'ECB', name:'ECB / OATH — by DOB Summons #',
+    byViol(n){ return `${BASE}6bgk-3dad.json?$where=${enc(`upper(isn_dob_bis_extract)='${n.replace(/'/g,"''").toUpperCase()}'`)}&$limit=10`; },
+    cols:['ecb_violation_number','isn_dob_bis_extract','issue_date','violation_type','violation_description','hearing_date','ecb_violation_status','penalty_imposed','amount_paid','balance_due'],
+    labels:['ECB #','DOB Summons #','Issue Date','Type','Description','Hearing Date','Status','Penalty','Paid','Balance Due'],
+    sc:'ecb_violation_status', ov:['ACTIVE','OPEN','PENDING','NOT CERTIFIED'],
+    penaltyCol:'penalty_imposed', paidCol:'amount_paid', balanceCol:'balance_due',
+    oathCol:'ecb_violation_number'
+  },
+
+  // DOB Legacy BIS — violation_number field
+  {
+    id:'dob_leg_viol', tag:'DOB', name:'DOB — Legacy BIS',
+    byViol(n){ return `${BASE}3h2n-5cm9.json?$where=${enc(`upper(violation_number)='${n.replace(/'/g,"''").toUpperCase()}'`)}&$limit=10`; },
+    cols:['violation_number','isn_dob_bis_viol','issue_date','violation_type_code','description','violation_category'],
+    labels:['Violation #','BIS #','Issue Date','Type','Description','Category'],
+    sc:'violation_category', ov:[]
+  },
+
+  // DOB Safety (DOB NOW) — violation_number field
+  {
+    id:'dob_now_viol', tag:'DOB', name:'DOB — Safety Violations (DOB NOW)',
+    byViol(n){ return `${BASE}855j-jady.json?$where=${enc(`upper(violation_number)='${n.replace(/'/g,"''").toUpperCase()}'`)}&$limit=10`; },
+    cols:['bin','violation_issue_date','violation_number','violation_type','violation_remarks','violation_status'],
+    labels:['BIN','Issue Date','Violation #','Type','Remarks','Status'],
+    sc:'violation_status', ov:['ACTIVE','OPEN']
+  },
+
+  // HPD — by violationid (numeric ID)
+  {
+    id:'hpd_viol_id', tag:'HPD', name:'HPD — Housing Violation',
+    byViol(n){ return /^\d+$/.test(n.trim()) ? `${BASE}wvxf-dwi5.json?violationid=${parseInt(n)}&$limit=10` : null; },
+    cols:['violationid','inspectiondate','class','novdescription','currentstatus','novissueddate'],
+    labels:['ID','Inspection','Class','Description','Status','NOV Date'],
+    sc:'currentstatus', ov:['OPEN','NOV ISSUED','VIOLATION OPEN']
+  },
+
+  // OATH Case Status — covers ALL agencies including FDNY, DOB, DCA, DEP, etc.
+  // This is the master dataset for every summons filed through OATH
+  {
+    id:'oath_case', tag:'OATH', name:'OATH — Case Status (All Agencies)',
+    byViol(n){ return `${BASE}jz4z-kudi.json?$where=${enc(`upper(ticket_number)='${n.replace(/'/g,"''").toUpperCase()}'`)}&$limit=10`; },
+    cols:['ticket_number','issue_date','violation_description','respondent_name','hearing_date','case_status','penalty_imposed','amount_paid','balance_due'],
+    labels:['Summons #','Issued','Violation','Respondent','Hearing Date','Status','Penalty','Paid','Balance Due'],
+    sc:'case_status', ov:['PENDING','SCHEDULED','ACTIVE','NOT DECIDED'],
+    penaltyCol:'penalty_imposed', paidCol:'amount_paid', balanceCol:'balance_due'
+  }
+];
+
+// Keep VDSETS for backward compat (unused now)
+const VDSETS = { ecb:[], dob:[], hpd:[], fdny:[] };
+
+
+// ── SAFE FETCH WITH FALLBACK ───────────────────────────────────────────────
+// Tries primary URL first, falls back to secondary if it errors
+async function safeFetch(ds, urlPrimary, urlFallback) {
+  let res = await fetchDsWithRetry(ds, urlPrimary);
+  if (res.err && urlFallback && isTransientFetchError(res.err)) {
+    res = await fetchDsWithRetry(ds, urlFallback);
+    if (!res.err) res.usedFallback = true;
+  }
+  return res;
+}
+
+// ── FETCH ──────────────────────────────────────────────────────────────────
+async function fetchDs(ds, url){
+  if(!url) return {ds, rows:[], skipped:true};
+  
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  try{
+    const r = await fetch(url, {signal: ctrl.signal, headers: TOKEN_HEADER});
+    clearTimeout(timer);
+    if(!r.ok){ const t=await r.text().catch(()=>''); throw new Error(`HTTP ${r.status}: ${t.slice(0,220)}`); }
+    const rows = await r.json();
+    if(!Array.isArray(rows)) throw new Error('Unexpected response format');
+
+
+    if(!foundBIN){ const b=extractBIN(rows); if(b) showBIN(b); }
+    return {ds,rows,url};
+  }catch(e){
+    clearTimeout(timer);
+    const msg = e.name==='AbortError' ? 'Request timed out after 12s' : e.message;
+    return {ds, rows:[], err:msg, url};
   }
 }
+
+// ── FETCH WITH RATE LIMIT RETRY ────────────────────────────────────────────
+// Wraps fetchDs with automatic retry on 429 (rate limited)
+async function fetchDsWithRetry(ds, url) {
+  const result = await fetchDs(ds, url);
+  if (result.err && isTransientFetchError(result.err)) {
+    await new Promise(r => setTimeout(r, 1000));
+    const retry = await fetchDs(ds, url);
+    if (!retry.err) retry.retried = true;
+    return retry;
+  }
+  return result;
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function fmtV(v){
+  if(v===null||v===undefined||v==='') return '<span style="opacity:0.25">—</span>';
+  const s=String(v);
+  if(s.match(/^\d{4}-\d{2}-\d{2}/)) return s.slice(0,10);
+  // Handle YYYYMMDD format (e.g. ECB dates: 20230810 → 2023-08-10)
+  if(s.match(/^\d{8}$/) && parseInt(s.slice(0,4)) > 1900) {
+    return s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8);
+  }
+  if(s.length>110) return s.slice(0,110)+'…';
+  return s;
+}
+
+
+
+function updateBinHealth(safeResults) {
+  const binEl = document.getElementById('binVal') || document.querySelector('.bin-num') || document.querySelector('.bin-val');
+  if (!binEl) return;
+
+  // Check for SWO / Vacate
+  const hasSWO = safeResults.some(r => r.rows?.some(row =>
+    Object.values(row).some(v => {
+      const s = (v||'').toString().toUpperCase();
+      return s.includes('STOP WORK') || s.includes('VACATE') || s.includes('SWO');
+    })
+  ));
+
+  // Check for open C-class HPD violations
+  const hasCClass = safeResults.some(r =>
+    r.ds?.tag === 'HPD' && r.rows?.some(row => {
+      const cls = (row.class||'').toUpperCase();
+      const status = (row.currentstatus||'').toUpperCase();
+      return cls === 'C' && !['CLOSE','RESOLV','DISMISS','COMPLI'].some(v=>status.includes(v));
+    })
+  );
+
+  // Check for open ECB balance
+  const hasECBBalance = safeResults.some(r =>
+    r.ds?.tag === 'ECB' && r.rows?.some(row => parseFloat(row.balance_due||0) > 0)
+  );
+
+  // Check if all open counts are 0
+  const allClean = safeResults.every(r =>
+    !r.rows?.length || r.rows.every(row => {
+      const sc = r.ds?.sc;
+      if (!sc) return true;
+      const val = (row[sc]||'').toUpperCase();
+      return ['CLOSE','RESOLV','DISMISS','COMPLI','SIGNED OFF','APPROVED','PERMIT ENTIRE','LOC ISSUED','COMPLETE'].some(v=>val.includes(v));
+    })
+  );
+
+  if (hasSWO) {
+    binEl.style.color = '#f87171'; // red — critical
+  } else if (hasCClass || hasECBBalance) {
+    binEl.style.color = '#f97316'; // orange — serious issues
+  } else if (allClean) {
+    binEl.style.color = '#86efac'; // green — all clear
+  } else {
+    binEl.style.color = 'var(--gold)'; // default gold
+  }
+}
+
+function tagClass(tag){ return 'atag atag-'+(tag||'DOB').replace(/[^A-Z0-9]/gi,'').toUpperCase(); }
+
+function pill(ds,row){
+  const raw=(row[ds.sc]||'').toString().trim();
+  if(!raw) return '<span style="opacity:0.25">—</span>';
+  const u=raw.toUpperCase();
+
+  // ── GREEN — fully resolved, approved, complete ──────────────────────────
+  const isGreen = [
+    'SIGNED OFF','SIGN OFF','APPROVED','PERMIT ENTIRE','LOC ISSUED',
+    'CERTIFICATE OF OCCUPANCY','COMPLI','CERTIF','CORRECT',
+    'CLOSE','RESOLV','DISMISS','RESCIND','INACTIVE','PAID IN FULL',
+    'COMPLETE','COMPLETED','CLOSED','DISMISSED','RESOLVED',
+    'PERMIT ISSUED','ISSUED','SIGN-OFF','FINAL APPROVAL'
+  ].some(v=>u.includes(v));
+
+  // ── YELLOW — actively in progress, neutral moving forward ───────────────
+  const isYellow = [
+    'IN PROGRESS','PLAN EXAM','ACTIVE','PENDING','ASSIGNED',
+    'UNDER REVIEW','FILING','SUBMITTED','RECEIVED','SCHEDULED',
+    'PARTIALLY COMPLETE','PARTIAL'
+  ].some(v=>u.includes(v));
+
+  // ── ORANGE — needs attention, stalled, has issues ───────────────────────
+  const isOrange = [
+    'OBJECTION','ON HOLD','HOLD','INCOMPLETE','NOT CERTIFIED',
+    'OPEN','NOV ISSUED','VIOLATION OPEN','VIOLATION ACTIVE',
+    'ACTIVE VIOLATION','NOT DECIDED','SUMMONS ISSUED'
+  ].some(v=>u.includes(v));
+
+  // ── RED — actual problem, rejected, lapsed ──────────────────────────────
+  const isRed = [
+    'REJECT','REVOKE','FAILED','LAPSED','EXPIRED','DENIED',
+    'VACATE','STOP WORK','SWO','UNSAFE','EMERGENCY'
+  ].some(v=>u.includes(v));
+
+  const cls = isRed ? 'p-red' : isOrange ? 'p-o' : isYellow ? 'p-yellow' : isGreen ? 'p-c' : 'p-p';
+  return `<span class="p ${cls}">${raw}</span>`;
+}
+
+
+
+
+
+function buildTable(ds, rows){
+  if (!ds.cols || !Array.isArray(ds.cols)) {
+    return '<div class="errmsg">⚠ Dataset misconfigured: missing column definitions.</div>';
+  }
+  // Sort rows by most recent date first
+  const DATE_FIELDS = ['novissueddate','inspectiondate','issue_date','violation_issue_date',
+    'created_date','latest_action_date','filing_date','issuance_date','date_entered',
+    'statusdate','statusdescription','pre__filing_date'];
+  const dateField = DATE_FIELDS.find(f => rows[0] && rows[0][f] !== undefined);
+  if (dateField) {
+    rows = [...rows].sort((a,b) => {
+      // Handle both ISO (2025-06-12) and US (06/12/2025 or 12/27/1991) formats
+      const toSort = s => {
+        if (!s) return '';
+        if (s.match(/^\d{4}-/)) return s.slice(0,10); // ISO → sortable as-is
+        if (s.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+          const [m,d,y] = s.split('/');
+          return `${y}-${m}-${d}`; // Convert MM/DD/YYYY → YYYY-MM-DD
+        }
+        return s;
+      };
+      return toSort(b[dateField]).localeCompare(toSort(a[dateField]));
+    });
+  }
+  const ths = ds.cols.map((_,i) => `<th>${(ds.labels && ds.labels[i]) || ds.cols[i]}</th>`).join('');
+
+  // Classify each row as open or resolved
+  function isResolved(row) {
+    const val = ds.sc ? (row[ds.sc] || '').toString().toUpperCase() : '';
+    if (!val) return false;
+    // Explicitly open — never hide these
+    const isOpen = ds.ov.some(v => val.includes(v.toUpperCase()));
+    if (isOpen) return false;
+    // Resolved indicators
+    return ['CLOSE','RESOLV','DISMISS','COMPLI','RESCIND','CERTIF','CORRECT','INACTIVE','COMPLY'].some(v => val.includes(v));
+  }
+
+  function buildRow(row, resolved) {
+    if (!ds.cols) return `<tr><td colspan="6">Dataset misconfigured</td></tr>`;
+    const tds = ds.cols.map(col => {
+      if(col===ds.sc) return `<td>${pill(ds,row)}</td>`;
+      const isId = col.toLowerCase().includes('number')||col==='unique_key'||col==='violationid'||col==='bin'||col==='bin__'||col==='job__'||col==='job_filing_number'||col==='ticket_number';
+      // HPD violation class — A/B/C coloring
+      if(col==='class'&&row[col]){
+        const vc=(row[col]||'').toUpperCase().trim();
+        const vcColor = vc==='C'?'#f87171':vc==='B'?'#f97316':vc==='A'?'#fde047':'var(--gray)';
+        const vcTitle = vc==='C'?'Immediately Hazardous':vc==='B'?'Hazardous':vc==='A'?'Non-Hazardous':'';
+        return `<td><span class="tooltip" data-tip="${htmlEsc(vcTitle)}" style="font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:0.08em;color:${vcColor}">${htmlEsc(row[col])}</span></td>`;
+      }
+      // Format money columns
+      const isMoney = col==='penalty_imposed'||col==='amount_paid'||col==='balance_due'||col==='balance';
+      if(isMoney){
+        const raw = parseFloat(row[col]||0);
+        if(isNaN(raw)||raw===0) return `<td><span style="opacity:0.25">—</span></td>`;
+        const fmt = '$'+raw.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+        // Balance due gets red highlight if > 0
+        const style = col==='balance_due' && raw>=1000
+          ? ' style="color:#f87171;font-weight:800;font-size:0.95rem"'
+          : col==='balance_due' && raw>0
+          ? ' style="color:var(--red);font-weight:700"'
+          : col==='balance_due' && raw<=0
+          ? ' style="color:var(--green);font-weight:600"'
+          : col==='penalty_imposed' ? ' style="color:var(--orange)"' : '';
+        return `<td${style}>${fmt}</td>`;
+      }
+      return `<td${isId?' class="id"':''}>${fmtV(row[col])}</td>`;
+    }).join('');
+    return `<tr${resolved?' class="resolved-row" style="display:none"':''} >${tds}</tr>`;
+  }
+
+  const openRows     = rows.filter(r => !isResolved(r));
+  const resolvedRows = rows.filter(r =>  isResolved(r));
+
+  const openHtml     = openRows.map(r => buildRow(r, false)).join('');
+  const resolvedHtml = resolvedRows.map(r => buildRow(r, true)).join('');
+
+  // Toggle button — only shown if there are resolved rows
+  const toggleId = 'rt-' + Math.random().toString(36).slice(2);
+  const toggle = resolvedRows.length
+    ? `<div class="resolved-toggle" id="${toggleId}" onclick="toggleResolved('${toggleId}')">
+        <span class="rt-dot"></span>
+        <span class="rt-count">${resolvedRows.length}</span>
+        <span class="rt-label">Resolved / Dismissed — click to show</span>
+        <span class="rt-arrow">▼</span>
+       </div>`
+    : '';
+
+  // If no open rows but has resolved, show a clean message
+  const emptyOpen = !openRows.length && resolvedRows.length
+    ? `<tr><td colspan="${ds.cols.length}" style="padding:14px;text-align:center;color:var(--green);font-size:0.8rem">
+        ✓ All records for this property are resolved or dismissed.</td></tr>`
+    : '';
+
+  return `<div class="tscroll">
+    <table>
+      <thead><tr>${ths}</tr></thead>
+      <tbody>${emptyOpen}${openHtml}${resolvedHtml}</tbody>
+    </table>
+  </div>${toggle}`;
+}
+
+function renderBlock(res){
+  const {ds, rows, err, url, skipped, pending} = res;
+  // Warning datasets (SWO, Vacate) are shown in the warnings panel only — skip here
+  if (ds.isWarning) return '';
+  const tid = 't-'+ds.id;
+
+  const _binOnly = ['dob_complaints','permits_bis','permits_now','jobs_bis','jobs_now'];
+  if(skipped && _binOnly.includes(ds.id)) return '';
+  if(skipped){
+    return `<div class="ablock" id="block-${ds.id}">
+      <div class="ahead" onclick="tog('${tid}')">
+        <div class="${tagClass(ds.tag)}">${ds.tag}</div><div class="aname">${ds.name}</div>
+        <span class="abadge b-skip">N/A by BIN</span>
+        <span class="chv" id="cv-${tid}">▼</span>
+      </div>
+      <div class="atbl" id="${tid}">
+        <div class="skipmsg">Switch to address search for 311 results.</div>
+      </div>
+    </div>`;
+  }
+
+  // Count open vs resolved for the badge display
+  function countOpen(rows, ds) {
+    if (!ds.sc) return {open: rows.length, resolved: 0};
+    let open=0, resolved=0;
+    rows.forEach(row => {
+      const val=(row[ds.sc]||'').toString().toUpperCase();
+      const isO=ds.ov.some(v=>val.includes(v.toUpperCase()));
+      const isR=['CLOSE','RESOLV','DISMISS','COMPLI','RESCIND','CERTIF','CORRECT','INACTIVE'].some(v=>val.includes(v));
+      if(isO) open++; else if(isR) resolved++; else open++;
+    });
+    return {open,resolved};
+  }
+  let bc='b-none', bt='None Found';
+  if(err){bc='b-err'; bt='Error';}
+  else if(rows.length){
+    const cnt=countOpen(rows,ds);
+    if(cnt.open>0&&cnt.resolved>0){bc='b-hit';bt=cnt.open+' Open · '+cnt.resolved+' Resolved';}
+    else if(cnt.open>0){bc='b-hit';bt=cnt.open+' Open';}
+    else{bc='b-none';bt=cnt.resolved+' Resolved';}
+  }
+  const auto=false; // All dropdowns start closed
+
+  let inner='';
+  if(err){
+    inner=`<div class="errmsg">⚠ Could not load data.<code>${err}</code><code style="opacity:0.3;margin-top:2px">${url||''}</code></div>`;
+  }else if(!rows.length){
+    inner=`<div class="nodata">✓ No records found for this property.</div>`;
+  }else{
+    inner=buildTable(ds,rows);
+  }
+
+  return `<div class="ablock" id="block-${ds.id}">
+    <div class="ahead" onclick="tog('${tid}')">
+      <div class="${tagClass(ds.tag)}">${ds.tag}</div><div class="aname">${ds.name}</div>
+      <span class="abadge ${bc}" id="badge-${ds.id}">${bt}</span>
+      <span class="chv${auto?' o':''}" id="cv-${tid}">▼</span>
+    </div>
+    <div class="atbl${auto?' o':''}" id="${tid}">${inner}</div>
+  </div>`;
+}
+
+
+// ── WARNINGS ──────────────────────────────────────────────────────────────
+// Scans existing fetched results for Stop Work Orders and Vacate Orders.
+// Only renders if something is found — otherwise stays completely hidden.
+// Each warning card shows description + clickable link to source portal.
+
+// ── INTELLIGENCE DASHBOARD HELPERS ────────────────────────────────────────
+function resetIntelPanels(){
+  const panel=document.getElementById('intelPanel');
+  if(panel) panel.classList.remove('on');
+  ['healthPanel','confidencePanel','missingDataPanel','actionPanel','agingPanel','ecbInsightPanel','dobInsightPanel','issueGroupPanel','timelinePanel','freshnessPanel'].forEach(id=>{const e=document.getElementById(id); if(e) e.innerHTML='';});
+}
+function plainText(v){ return String(v ?? '').replace(/<[^>]+>/g,'').trim(); }
+function parseMoney(v){ if(v===null||v===undefined||v==='') return 0; const n=parseFloat(String(v).replace(/[$,]/g,'')); return isNaN(n)?0:n; }
+function fmtMoney(n){ return '$'+(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function normalizeDate(v){
+  if(!v) return null; const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  if(/^\d{8}$/.test(s) && Number(s.slice(0,4))>1900) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}/.test(s)){ const [m,d,y]=s.split(/[\/\s]/); return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+  const t=Date.parse(s); return isNaN(t)?null:new Date(t).toISOString().slice(0,10);
+}
+function daysOld(dateStr){ const d=normalizeDate(dateStr); if(!d) return null; return Math.floor((Date.now()-new Date(d+'T00:00:00').getTime())/86400000); }
+function firstVal(row, fields){ for(const f of fields){ if(row && row[f]!==undefined && row[f]!==null && row[f] !== '') return row[f]; } return ''; }
+function rowDate(row){ return firstVal(row,['issue_date','violation_issue_date','inspectiondate','novissueddate','created_date','filing_date','pre__filing_date','issuance_date','date_entered','hearing_date','latest_action_date','statusdate','closed_date']); }
+function rowStatus(row, ds){ return (ds?.sc ? row[ds.sc] : firstVal(row,['status','currentstatus','violation_status','ecb_violation_status','job_status','filing_status','permit_status','case_status'])) || ''; }
+function isResolvedIntel(row, ds){
+  const val=String(rowStatus(row,ds)||'').toUpperCase();
+  if(ds?.ov?.some(v=>val.includes(String(v).toUpperCase()))) return false;
+  return ['CLOSE','RESOLV','DISMISS','COMPLI','RESCIND','CERTIF','CORRECT','INACTIVE','SIGNED OFF','APPROVED','PERMIT ENTIRE','LOC ISSUED','COMPLETE','PERMIT ISSUED','CLOSED'].some(v=>val.includes(v));
+}
+function isOpenIntel(row, ds){ return !isResolvedIntel(row, ds); }
+function recordTitle(row, ds){
+  return plainText(firstVal(row,['novdescription','description','violation_remarks','descriptor','complaint_type','violation_description','job_description','work_type','filing_type','violation_type','violation_type_code','status'])) || ds?.name || 'Record';
+}
+function explain(text, tip){
+  return `<span class="tooltip" data-tip="${htmlEsc(tip)}">${htmlEsc(text)}</span>`;
+}
+function getDataConfidence(results){
+  const arr = results || [];
+  const hasBin = !!foundBIN;
+  const returned = arr.filter(r => r && !r.err && !r.skipped && Array.isArray(r.rows) && r.rows.length).length;
+  const realErrors = arr.filter(r => r && r.err && !r.skipped && !isOptionalDataset(r.ds));
+  if(hasBin && !realErrors.length) return {cls:'green', label:'High Confidence', copy:'BIN was resolved and required agency datasets returned normally.'};
+  if(hasBin && realErrors.length) return {cls:'orange', label:'Medium Confidence', copy:`BIN was resolved, but ${realErrors.length} required agency data source${realErrors.length>1?'s':''} returned an error after retry/fallback.`};
+  if(currentMode === 'addr' && returned) return {cls:'orange', label:'Medium Confidence', copy:'Address-based results returned, but no BIN was resolved. Treat agency matches as less certain.'};
+  return {cls:'red', label:'Low Confidence', copy:'No BIN-confirmed building match was available for this lookup.'};
+}
+function getMissingDataWarnings(results){
+  const arr = results || [];
+  const byId = id => arr.find(r => r && r.ds && r.ds.id === id);
+  const missing = [];
+  const check = (id, label, required=true) => {
+    const r = byId(id);
+    if(!r) return;
+    if(r.err && required) missing.push(`${label} returned an error after retry/fallback and may be incomplete.`);
+    else if(!r.err && !r.skipped && Array.isArray(r.rows) && r.rows.length === 0) missing.push(`No ${label} records returned.`);
+  };
+  check('hpd_v','HPD violation', true);
+  check('dob_v','DOB legacy violation', false);
+  check('dob_safe','DOB NOW safety violation', true);
+  check('ecb','ECB/OATH summons', true);
+  if(currentMode === 'bin') missing.push('311 records are address-based and cannot be fully confirmed by BIN search alone.');
+  if(!foundBIN && currentMode === 'addr') missing.push('BIN was not resolved from the returned records, so BIN-only datasets may be incomplete.');
+  return missing.slice(0,6);
+}
+function saveLastSearchState(){
+  try{
+    const data={mode:currentMode,ts:new Date().toISOString(),house:document.getElementById('houseNo')?.value||'',street:document.getElementById('street')?.value||'',boro:document.getElementById('boro')?.value||'',bin:document.getElementById('binInput')?.value||'',viol:document.getElementById('violNum')?.value||''};
+    localStorage.setItem('gcc_last_search', JSON.stringify(data));
+  }catch(e){}
+}
+function restoreLastSearchState(){
+  try{
+    const data=JSON.parse(localStorage.getItem('gcc_last_search')||'null');
+    if(!data) return;
+    if(data.mode) setMode(data.mode);
+    if(data.house) document.getElementById('houseNo').value=data.house;
+    if(data.street) document.getElementById('street').value=data.street;
+    if(data.boro) document.getElementById('boro').value=data.boro;
+    if(data.bin) document.getElementById('binInput').value=data.bin;
+    if(data.viol) document.getElementById('violNum').value=data.viol;
+    const card=document.querySelector('.card-sub');
+    if(card && data.ts){
+      const when=new Date(data.ts).toLocaleString();
+      card.insertAdjacentHTML('beforeend', ` <span class="last-search-chip">Last search restored: ${htmlEsc(when)}</span>`);
+    }
+  }catch(e){}
+}
+function updateSidebarMetrics(level, openCount, actionCount){
+  try{
+    const key = foundBIN || `${(document.getElementById('houseNo')?.value||'').trim()} ${(document.getElementById('street')?.value||'').trim()} ${(document.getElementById('boro')?.value||'').trim()}`.toUpperCase();
+    if(!key.trim()) return;
+    const meta = JSON.parse(localStorage.getItem('gcc_sidebar_meta')||'{}');
+    meta[key] = {health:level, openCount, actionCount, lastChecked:new Date().toISOString(), bin:foundBIN||''};
+    localStorage.setItem('gcc_sidebar_meta', JSON.stringify(meta));
+    const clients=loadClients(); let changed=false;
+    clients.forEach(c=>(c.props||[]).forEach(p=>{
+      const pKey = p.bin || `${p.houseNo||''} ${p.street||''} ${p.boro||''}`.toUpperCase();
+      if((foundBIN && p.bin===foundBIN) || (!foundBIN && pKey===key)){
+        p.health=level; p.openCount=openCount; p.actionCount=actionCount; p.lastSearched=new Date().toISOString(); changed=true;
+      }
+    }));
+    if(changed) saveClients(clients);
+    renderSidebar();
+  }catch(e){}
+}
+function renderDecisionDashboard(results){
+  const panel=document.getElementById('intelPanel'); if(!panel) return;
+  const clean=(results||[]).filter(r=>r && r.ds && !r.err && !r.skipped && Array.isArray(r.rows));
+  if(!clean.length){ resetIntelPanels(); return; }
+  const all=[]; clean.forEach(res=>res.rows.forEach(row=>all.push({row,ds:res.ds,res})));
+  const open=all.filter(x=>isOpenIntel(x.row,x.ds));
+  const hpdOpenC=all.filter(x=>x.ds.id==='hpd_v' && String(x.row.class||'').toUpperCase()==='C' && isOpenIntel(x.row,x.ds));
+  const stopVacate=all.filter(x=>Object.values(x.row||{}).some(v=>/(STOP WORK|VACATE|\bSWO\b)/i.test(String(v||''))));
+  const ecbRows=all.filter(x=>x.ds.id==='ecb' || x.ds.id==='oath_case');
+  const ecbOpen=ecbRows.filter(x=>isOpenIntel(x.row,x.ds));
+  let penalty=0, paid=0, balance=0;
+  ecbRows.forEach(x=>{ const p=parseMoney(x.row.penalty_imposed); const pd=parseMoney(x.row.amount_paid); const b=x.row.balance_due!==undefined&&x.row.balance_due!==null&&x.row.balance_due!==''?parseMoney(x.row.balance_due):(p-pd); penalty+=p; paid+=pd; balance+=b; });
+  const jobs=all.filter(x=>['jobs_bis','jobs_now'].includes(x.ds.id));
+  const openJobs=jobs.filter(x=>isOpenIntel(x.row,x.ds));
+  const permits=all.filter(x=>['permits_bis','permits_now'].includes(x.ds.id));
+  const openPermits=permits.filter(x=>isOpenIntel(x.row,x.ds));
+  const oldestOpenDays=Math.max(0,...open.map(x=>daysOld(rowDate(x.row))||0));
+  let score=0; if(stopVacate.length) score+=60; if(hpdOpenC.length) score+=30; if(balance>0) score+=20; if(open.length>=15) score+=20; if(oldestOpenDays>365) score+=15; if(openJobs.length) score+=5;
+  let level='green', label='Stable', copy='No major open compliance issues detected in the returned datasets.';
+  if(score>=60){ level='red'; label='Action Required'; copy='Critical or high-risk items were found. Review the action items before relying on the property status.'; }
+  else if(score>=20){ level='orange'; label='Needs Review'; copy='Open issues or aging records were found. Review before sending a report or making a decision.'; }
+  const health=document.getElementById('healthPanel');
+  health.innerHTML=`<div class="health-box ${level}"><div class="health-badge">${label}</div><div class="health-copy">${copy}</div><div class="intel-sub">Open records: ${open.length} · Oldest open: ${oldestOpenDays||0} days · ECB balance: ${fmtMoney(balance)}</div></div>`;
+  const conf=getDataConfidence(results);
+  const confPanel=document.getElementById('confidencePanel');
+  if(confPanel) confPanel.innerHTML=`<div class="confidence-box ${conf.cls}"><div class="confidence-badge">${conf.label}</div><div class="confidence-copy">${htmlEsc(conf.copy)}</div></div>`;
+  const missing=getMissingDataWarnings(results);
+  const missingPanel=document.getElementById('missingDataPanel');
+  if(missingPanel) missingPanel.innerHTML=missing.length?`<div class="missing-box"><div class="confidence-badge">Missing / Limited Data</div><div class="missing-list">${missing.map(m=>`<div>${htmlEsc(m)}</div>`).join('')}</div></div>`:'';
+  const actions=[];
+  if(stopVacate.length) actions.push(['red',`${stopVacate.length} stop-work / vacate related record${stopVacate.length!==1?'s':''} found.`]);
+  if(hpdOpenC.length) actions.push(['red',`${hpdOpenC.length} open HPD Class C violation${hpdOpenC.length!==1?'s':''}.`]);
+  if(balance>0) actions.push(['red',`${fmtMoney(balance)} ECB/OATH balance due across returned summons records.`]);
+  if(ecbOpen.length) actions.push(['orange',`${ecbOpen.length} open/pending ECB/OATH summons record${ecbOpen.length!==1?'s':''}.`]);
+  if(oldestOpenDays>365) actions.push(['orange',`Oldest open item appears to be over ${oldestOpenDays} days old.`]);
+  if(openPermits.length) actions.push(['orange',`${openPermits.length} active permit record${openPermits.length!==1?'s':''} found.`]);
+  if(!actions.length) actions.push(['green','No immediate action flags generated from returned records.']);
+  document.getElementById('actionPanel').innerHTML=`<div class="action-box"><div class="action-title">Action Required</div><div class="action-list">${actions.slice(0,7).map(a=>`<div class="action-item"><span class="mark ${a[0]}">●</span><span>${htmlEsc(a[1])}</span></div>`).join('')}</div></div>`;
+  const buckets=[0,0,0,0];
+  open.forEach(x=>{ const d=daysOld(rowDate(x.row)); if(d===null) return; if(d<=30)buckets[0]++; else if(d<=90)buckets[1]++; else if(d<=365)buckets[2]++; else buckets[3]++; });
+  document.getElementById('agingPanel').innerHTML=`<div class="intel-card"><div class="intel-label">Open Record Aging</div><div class="aging-bar"><div class="age-bucket"><div class="n">${buckets[0]}</div><div class="l">0–30 Days</div></div><div class="age-bucket"><div class="n">${buckets[1]}</div><div class="l">30–90 Days</div></div><div class="age-bucket"><div class="n">${buckets[2]}</div><div class="l">90–365 Days</div></div><div class="age-bucket"><div class="n">${buckets[3]}</div><div class="l">1+ Years</div></div></div></div>`;
+  const hearingDates=ecbOpen.map(x=>normalizeDate(x.row.hearing_date)).filter(Boolean).sort();
+  const oldestSummons=Math.max(0,...ecbOpen.map(x=>daysOld(rowDate(x.row))||0));
+  document.getElementById('ecbInsightPanel').innerHTML=`<div class="intel-grid"><div class="intel-card"><div class="intel-label">ECB/OATH Open</div><div class="intel-val">${ecbOpen.length}</div><div class="intel-sub">Open or pending summonses</div></div><div class="intel-card"><div class="intel-label">ECB Balance</div><div class="intel-val">${fmtMoney(balance)}</div><div class="intel-sub">Penalty ${fmtMoney(penalty)} · Paid ${fmtMoney(paid)}</div></div><div class="intel-card"><div class="intel-label">Next Hearing</div><div class="intel-val">${hearingDates[0]||'—'}</div><div class="intel-sub">From returned ECB/OATH records</div></div><div class="intel-card"><div class="intel-label">Oldest Summons</div><div class="intel-val">${oldestSummons||'—'}</div><div class="intel-sub">Days old</div></div></div>`;
+  const jobDates=jobs.map(x=>normalizeDate(rowDate(x.row))).filter(Boolean).sort().reverse();
+  const jobTypes=[...new Set(jobs.map(x=>String(firstVal(x.row,['job_type','jobtype','work_type','filing_type','application_type'])||'').toUpperCase()).filter(Boolean))].slice(0,6);
+  document.getElementById('dobInsightPanel').innerHTML=`<div class="intel-grid"><div class="intel-card"><div class="intel-label">DOB Jobs</div><div class="intel-val">${jobs.length}</div><div class="intel-sub">${openJobs.length} open / active</div></div><div class="intel-card"><div class="intel-label">Last DOB Job</div><div class="intel-val">${jobDates[0]||'—'}</div><div class="intel-sub">Most recent returned filing date</div></div><div class="intel-card"><div class="intel-label">Job Types</div><div class="intel-val" style="font-size:1rem;line-height:1.25">${jobTypes.length?htmlEsc(jobTypes.join(', ')):'—'}</div><div class="intel-sub">BIS + DOB NOW returned records</div></div><div class="intel-card"><div class="intel-label">Active Permits</div><div class="intel-val">${openPermits.length}</div><div class="intel-sub">From permit datasets</div></div></div>`;
+  const groupMap=new Map();
+  all.forEach(x=>{ const src=x.ds.tag||x.ds.id; let t=recordTitle(x.row,x.ds).toUpperCase(); t=t.replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); const key=(src+' — '+(t.split(' ').slice(0,6).join(' ')||'Record')).slice(0,85); groupMap.set(key,(groupMap.get(key)||0)+1); });
+  const groups=[...groupMap.entries()].filter(x=>x[1]>1).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const issuePanel=document.getElementById('issueGroupPanel');
+  if(issuePanel){
+    const tid='intel-issues';
+    issuePanel.innerHTML=groups.length?`<div class="ablock intel-drop" id="block-${tid}">
+      <div class="ahead" onclick="tog('${tid}')">
+        <div class="atag atag-311">INFO</div><div class="aname">Repeat Issue Groups</div>
+        <span class="abadge b-hit">${groups.length} Group${groups.length!==1?'s':''}</span>
+        <span class="chv" id="cv-${tid}">▼</span>
+      </div>
+      <div class="atbl" id="${tid}"><div class="issue-box"><div class="group-list">${groups.map(([k,c])=>`<div class="group-row"><span>${htmlEsc(k)}</span><span class="group-count">${c}</span></div>`).join('')}</div></div></div>
+    </div>`:'';
+  }
+  const timeline=all.map(x=>({date:normalizeDate(rowDate(x.row)),src:x.ds.tag||x.ds.id,text:recordTitle(x.row,x.ds)})).filter(x=>x.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,25);
+  const timePanel=document.getElementById('timelinePanel');
+  if(timePanel){
+    const tid='intel-timeline';
+    timePanel.innerHTML=timeline.length?`<div class="ablock intel-drop" id="block-${tid}">
+      <div class="ahead" onclick="tog('${tid}')">
+        <div class="atag atag-JOBS">TIME</div><div class="aname">Recent Activity Timeline</div>
+        <span class="abadge b-hit">${timeline.length} Item${timeline.length!==1?'s':''}</span>
+        <span class="chv" id="cv-${tid}">▼</span>
+      </div>
+      <div class="atbl" id="${tid}"><div class="timeline-box"><div class="timeline-list">${timeline.map(x=>`<div class="timeline-row"><div class="timeline-date">${x.date}</div><div class="timeline-src">${htmlEsc(x.src)}</div><div class="timeline-text">${htmlEsc(x.text)}</div></div>`).join('')}</div></div></div>
+    </div>`:'';
+  }
+  const fresh=clean.map(r=>{ const dates=r.rows.map(row=>normalizeDate(rowDate(row))).filter(Boolean).sort().reverse(); return dates[0]?`<span class="fresh-pill"><strong>${htmlEsc(r.ds.tag)}</strong> latest ${dates[0]}</span>`:''; }).filter(Boolean).slice(0,12);
+  document.getElementById('freshnessPanel').innerHTML=fresh.length?`<div class="fresh-box"><div class="intel-title">Dataset Activity Dates</div><div class="fresh-list">${fresh.join('')}</div></div>`:'';
+  panel.classList.add('on');
+  try { updateActivePropertyIntelligence(level, open.length, actions.length); } catch(e) {}
+  try { updateSidebarMetrics(level, open.length, actions.length); } catch(e) {}
+}
+function updateActivePropertyIntelligence(level, openCount, actionCount){
+  if(!activePropertyId) return;
+  const clients=loadClients(); let changed=false;
+  clients.forEach(c=>(c.props||[]).forEach(p=>{ if(p.id===activePropertyId){ p.health=level; p.openCount=openCount; p.actionCount=actionCount; p.lastSearched=new Date().toISOString(); changed=true; }}));
+  if(changed){ saveClients(clients); renderSidebar(); }
+}
+
+function renderWarnings(results) {
+  const warnings = [];
+
+  results.forEach(res => {
+    if (res.err || res.skipped || !res.rows.length) return;
+    const id = res.ds.id;
+
+    res.rows.forEach(row => {
+
+      // ── DOB Legacy: SWO flagged by violation_type containing "STOP WORK" or "SWO"
+      if (id === 'dob_v') {
+        const vtype = (row.violation_type || '').toUpperCase();
+        const desc  = (row.description || '').toUpperCase();
+        if (vtype.includes('STOP WORK') || vtype.includes('SWO') || desc.includes('STOP WORK')) {
+          const bin = row.bin || foundBIN || '';
+          warnings.push({
+            tag: 'STOP WORK ORDER',
+            source: 'DOB — Legacy BIS',
+            date: row.issue_date || '',
+            desc: row.description || row.violation_type || '',
+            status: row.violation_category || '',
+            isActive: !(row.violation_category||'').toUpperCase().includes('DISMISS') &&
+                      !(row.violation_category||'').toUpperCase().includes('RESCIND'),
+            link: bin ? `http://a810-bisweb.nyc.gov/bisweb/PropertyProfileOverviewServlet?bin=${bin}&go2=+GO+&requestid=0` : null,
+            linkLabel: 'View on DOB BIS'
+          });
+        }
+      }
+
+      // ── DOB Safety (DOB NOW): SWO flagged by violation_type
+      if (id === 'dob_safe') {
+        const vtype = (row.violation_type || '').toUpperCase();
+        if (vtype.includes('STOP WORK') || vtype.includes('SWO')) {
+          const bin = row.bin || foundBIN || '';
+          warnings.push({
+            tag: 'STOP WORK ORDER',
+            source: 'DOB — Safety Violations (DOB NOW)',
+            date: row.violation_issue_date || '',
+            desc: row.violation_type + (row.violation_remarks ? ' — ' + row.violation_remarks : ''),
+            status: row.violation_status || '',
+            isActive: (row.violation_status||'').toUpperCase() === 'ACTIVE',
+            link: bin ? `https://a810-dobnow.nyc.gov/publish/app/user/newLogIn.html#!/search/building/${bin}` : null,
+            linkLabel: 'View on DOB NOW'
+          });
+        }
+      }
+
+      // ── HPD Violations: Vacate Order flagged in novdescription or currentstatus
+      if (id === 'hpd_v') {
+        const novdesc = (row.novdescription || '').toUpperCase();
+        const status  = (row.currentstatus || '').toUpperCase();
+        if (novdesc.includes('VACAT') || status.includes('VACAT')) {
+          const bin = row.bin || foundBIN || '';
+          warnings.push({
+            tag: 'ORDER TO VACATE',
+            source: 'HPD — Housing Violations',
+            date: row.novissueddate || row.inspectiondate || '',
+            desc: row.novdescription || '',
+            status: row.currentstatus || '',
+            isActive: status.includes('OPEN') || status.includes('VACAT'),
+            link: bin ? `https://hpdonline.nyc.gov/hpdonline/building/search?BIN=${bin}` : null,
+            linkLabel: 'View on HPD Online'
+          });
+        }
+      }
+
+      // ── 311: Vacate or SWO complaint types
+      if (id === 's311') {
+        const ctype = (row.complaint_type || '').toUpperCase();
+        const isVac = ctype.includes('VACAT');
+        const isSwo = ctype.includes('STOP WORK');
+        if (isVac || isSwo) {
+          warnings.push({
+            tag: isVac ? 'ORDER TO VACATE' : 'STOP WORK ORDER',
+            source: '311 Service Request',
+            date: row.created_date || '',
+            desc: row.complaint_type + (row.descriptor ? ' — ' + row.descriptor : ''),
+            status: row.status || '',
+            isActive: (row.status||'').toLowerCase() !== 'closed',
+            link: null,
+            linkLabel: null
+          });
+        }
+      }
+    });
+  });
+
+  const panel = document.getElementById('warningsPanel');
+  // If nothing found, keep panel completely hidden
+  if (!warnings.length) { panel.style.display = 'none'; return; }
+
+  const list  = document.getElementById('warningsList');
+  const count = document.getElementById('warningsCount');
+
+  count.textContent = warnings.length + ' Warning' + (warnings.length > 1 ? 's' : '');
+  list.innerHTML = warnings.map(w => {
+    const statusCls = w.isActive ? 'warn-active' : 'warn-resolved';
+    const dateStr   = w.date ? w.date.slice(0,10) : '';
+    const linkHtml  = w.link
+      ? `<a href="${w.link}" target="_blank" rel="noopener"
+           style="display:inline-block;margin-top:8px;color:var(--gold);font-size:0.75rem;
+                  font-family:'Barlow Condensed',sans-serif;font-weight:700;
+                  letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;
+                  border-bottom:1px dashed rgba(201,160,48,0.4);">${w.linkLabel} ↗</a>`
+      : '';
+    return `<div class="warn-card">
+      <div class="warn-header">
+        <span class="warn-badge">${w.tag}</span>
+        <span class="warn-title" style="font-size:0.82rem;color:var(--gray)">${w.source}</span>
+        ${dateStr ? `<span class="warn-date">Issued: ${dateStr}</span>` : ''}
+      </div>
+      ${w.desc ? `<div class="warn-desc">${w.desc}</div>` : ''}
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span class="warn-status ${statusCls}">${w.status || (w.isActive ? 'ACTIVE' : 'RESOLVED')}</span>
+        ${linkHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  panel.style.display = 'block';
+}
+
+
+// ── TOGGLE RESOLVED ROWS ───────────────────────────────────────────────────
+// Shows/hides resolved & dismissed rows within a dataset table.
+function toggleResolved(toggleId) {
+  const btn = document.getElementById(toggleId);
+  if (!btn) return;
+  const tscroll = btn.previousElementSibling;
+  if (!tscroll) return;
+  const rows = tscroll.querySelectorAll('tr.resolved-row');
+  const currentlyOpen = btn.classList.contains('open');
+  if (currentlyOpen) {
+    // Hide: restore inline style display:none
+    rows.forEach(r => { r.style.display = 'none'; });
+    btn.classList.remove('open');
+    btn.querySelector('.rt-arrow').textContent = '▼';
+    btn.querySelector('.rt-label').textContent = 'Resolved / Dismissed — click to show';
+  } else {
+    // Show: override inline style
+    rows.forEach(r => { r.style.display = 'table-row'; });
+    btn.classList.add('open');
+    btn.querySelector('.rt-arrow').textContent = '▲';
+    btn.querySelector('.rt-label').textContent = 'Resolved / Dismissed — click to hide';
+  }
+}
+
+function tog(id){
+  document.getElementById(id)?.classList.toggle('o');
+  document.getElementById('cv-'+id)?.classList.toggle('o');
+}
+
+
+
+// Override showBIN to also trigger DOB Legacy fetch in address mode
+
+
+
+// ── MAIN SEARCH ────────────────────────────────────────────────────────────
+
+// ── STREET NAME NORMALIZER ─────────────────────────────────────────────────
+// NYC APIs store street names without ordinal suffixes
+// "108th Street" → "108 Street", "42nd Ave" → "42 Ave"
+// "West 136th" → "West 136"
+function normalizeStreet(street) {
+  if (!street) return street;
+  // Remove ordinal suffixes from numbers: 1st→1, 2nd→2, 3rd→3, 4th→4 etc.
+  return street.replace(/(\d+)(st|nd|rd|th)\b/gi, '$1');
+}
+
+async function go(){
+  foundBIN = null;
+  autoFetched.clear();
+  latestResults = {};
+  document.getElementById('binBanner').classList.remove('on');
+  const searchId = ++activeSearchId;
+  const mode = currentMode;
+  let h='', s='', b='', bin='';
+
+  // ── VIOLATION SEARCH MODE ──────────────────────────────────────────────
+  if(mode==='viol'){
+    const num = document.getElementById('violNum').value.trim().toUpperCase();
+    if(!num){ alert('Please enter a violation or summons number.'); return; }
+    saveLastSearchState();
+
+    document.getElementById('sbtn-viol').disabled=true;
+    document.getElementById('results').innerHTML='';
+    document.querySelector('.tip').style.display='none';
+  const bpanel=document.getElementById('buildingProfile'); if(bpanel){bpanel.classList.remove('loaded');bpanel.innerHTML='';}
+    document.getElementById('binBanner').classList.remove('on');
+    document.getElementById('warningsPanel').style.display='none';
+    document.getElementById('warningsList').innerHTML='';
+    resetIntelPanels();
+    document.getElementById('sumRow').className='';
+    document.getElementById('sumRow').innerHTML='';
+    document.getElementById('bar').classList.add('on');
+    document.getElementById('spin').style.display='';
+    document.getElementById('barTxt').textContent='Searching for violation ' + num + '…';
+
+    // Search ALL datasets simultaneously — no agency filter needed
+    const datasets = VDSETS_ALL;
+
+    // Fire all fetches simultaneously
+    const vResults = await Promise.all(datasets.map(async ds => {
+      const url = ds.byViol(num);
+      if(!url) return {ds, rows:[], skipped:true};
+      return await fetchDsWithRetry(ds, url);
+    }));
+
+    // Build results HTML
+    let html_out = '';
+
+    // ECB: show amount owed summary if there are results
+    // Show amount owed — scan ALL ECB results for penalty data
+    {
+      let totalPenalty=0, totalPaid=0, totalBalance=0, hasAmounts=false;
+      vResults.filter(r => !r.err && r.rows.length).forEach(res => {
+        res.rows.forEach(row => {
+          if (!row.penalty_imposed && !row.amount_paid && !row.balance_due) return;
+          hasAmounts = true;
+          const penalty = parseFloat(row.penalty_imposed || 0);
+          const paid    = parseFloat(row.amount_paid || 0);
+          const balance = row.balance_due != null ? parseFloat(row.balance_due) : (penalty - paid);
+          totalPenalty += penalty; totalPaid += paid; totalBalance += balance;
+        });
+      });
+      if (hasAmounts) {
+        const fmt$ = n => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        html_out += `<div class="owed-box">
+          <div class="owed-item"><div class="owed-label">Penalty Imposed</div>
+            <div class="owed-val warn">${fmt$(totalPenalty)}</div></div>
+          <div class="owed-item"><div class="owed-label">Amount Paid</div>
+            <div class="owed-val ok">${fmt$(totalPaid)}</div></div>
+          <div class="owed-item"><div class="owed-label">Balance Due</div>
+            <div class="owed-val ${totalBalance>0?'bad':'ok'}">${fmt$(totalBalance)}</div></div>
+        </div>`;
+        // Show OATH link instead of auto-open (blocked on file:// URLs)
+        const oathLink = `https://a820-ecbticketfinder.nyc.gov/searchHome.action?st=summons&sn=${encodeURIComponent(num)}`;
+        html_out += `<div style="background:rgba(201,160,48,0.08);border:1px solid rgba(201,160,48,0.25);padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;border-radius:2px">
+          <span style="font-size:0.75rem;color:var(--gray)">OATH Summons Finder:</span>
+          <a href="${oathLink}" target="_blank" rel="noopener"
+             style="font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);text-decoration:none;border-bottom:1px dashed rgba(201,160,48,0.4)">
+            Search ${num} on OATH ↗
+          </a>
+        </div>`;
+      }
+    }
+
+    // Render each dataset result
+    vResults.forEach(res => {
+      const {ds, rows, err, url} = res;
+      const tid = 'vt-'+ds.id;
+      let bc='b-none', bt='None Found';
+      if(err){ bc='b-err'; bt='Error'; }
+      else if(rows.length){ bc='b-hit'; bt=rows.length+' Record'+(rows.length>1?'s':''); }
+      const auto = false; // All dropdowns start closed
+      let inner='';
+      if(err){
+        inner=`<div class="errmsg">⚠ Could not load data.<code>${err}</code><code style="opacity:0.3">${url}</code></div>`;
+      }else if(!rows.length){
+        inner=`<div class="nodata">No records found for <strong>${num}</strong> in this dataset.</div>`;
+      }else{
+        inner=buildTable(ds, rows);
+      }
+      html_out += `<div class="ablock">
+        <div class="ahead" onclick="tog('${tid}')">
+          <div class="${tagClass(ds.tag)}">${ds.tag}</div><div class="aname">${ds.name}</div>
+          <span class="abadge ${bc}">${bt}</span>
+          <span class="chv${auto?' o':''}" id="cv-${tid}">▼</span>
+        </div>
+        <div class="atbl${auto?' o':''}" id="${tid}">${inner}</div>
+      </div>`;
+    });
+
+    document.getElementById('results').innerHTML = html_out || '<div class="nodata">No results found.</div>';
+    try { renderDecisionDashboard(vResults); } catch(e) {}
+    const found = vResults.reduce((n,r)=>n+(r.rows?.length||0),0);
+    document.getElementById('spin').style.display='none';
+    document.getElementById('barTxt').textContent=`Done — ${found} record${found!==1?'s':''} found for ${num}.`;
+    document.getElementById('sbtn-viol').disabled=false;
+    return;
+  }
+  // ── END VIOLATION MODE ─────────────────────────────────────────────────
+
+  if(mode==='addr'){
+    h = up(document.getElementById('houseNo').value.trim());
+    // Keep hyphenated house numbers as-is — NYC APIs accept "41-08" format
+    s = up(normalizeStreet(document.getElementById('street').value.trim()));
+    b = document.getElementById('boro').value;
+    if(!h||!s){alert('Please enter both a house number and street name.');return;}
+    saveLastSearchState();
+    }else{
+    bin = document.getElementById('binInput').value.trim();
+    if(!bin||bin.length<6){alert('Please enter a valid BIN (6–7 digits).');return;}
+    saveLastSearchState();
+    bin = bin.padStart(7,'0');
+  }
+
+  // Reset
+  foundBIN = (mode==='bin') ? bin : null;
+  const btnId = mode==='addr'?'sbtn-addr':'sbtn-bin';
+  document.getElementById(btnId).disabled=true;
+  document.getElementById('results').innerHTML='';
+  document.querySelector('.tip').style.display='none';
+  const bpanel=document.getElementById('buildingProfile'); if(bpanel){bpanel.classList.remove('loaded');bpanel.innerHTML='';}
+  if(mode==='addr'){
+    document.getElementById('binBanner').classList.remove('on');
+    document.getElementById('binVal').textContent='—';
+    document.getElementById('binPortals').innerHTML='';
+  } else {
+    // BIN mode: call fetchBuildingProfile directly (showBIN guard blocks when foundBIN already set)
+    document.getElementById('binVal').textContent = bin;
+    document.getElementById('binPortals').innerHTML = `
+      <a class="bp-btn" href="https://hpdonline.nyc.gov/hpdonline/building/search?BIN=${bin}" target="_blank">HPD Online ↗</a>
+      <a class="bp-btn" href="http://a810-bisweb.nyc.gov/bisweb/PropertyProfileOverviewServlet?bin=${bin}&go2=+GO+&requestid=0" target="_blank">DOB BIS ↗</a>
+      <a class="bp-btn bp-now" href="https://a810-dobnow.nyc.gov/publish/Index.html#!/" target="_blank">DOB NOW ↗</a>
+      <a class="bp-fdny bp-btn" href="https://fires.fdnycloud.org/CitizenAccess/Default.aspx" target="_blank">FDNY Accela ↗</a>
+    `;
+    document.getElementById('binBanner').classList.add('on');
+    saveBINToProperty(bin);
+    fetchBuildingProfile(bin);
+  }
+  document.getElementById('warningsPanel').style.display='none';
+  document.getElementById('warningsList').innerHTML='';
+  resetIntelPanels();
+  document.getElementById('bar').classList.add('on');
+  document.getElementById('spin').style.display='';
+  document.getElementById('barTxt').textContent='Querying NYC Open Data…';
+
+  // Build summary placeholders
+  const sr=document.getElementById('sumRow');
+  sr.className='on';
+  sr.innerHTML=DSETS.filter(d=>d.id!=='jobs_bis'&&d.id!=='jobs_now').map(d=>{
+    const url = mode==='bin' ? d.byBIN(bin) : d.byAddr(h,s,b);
+    const skip = !url;
+    return `<div class="sc"><div class="sc-ag sc-ag-${d.tag}">${d.tag}</div><div class="sc-n${skip?' z':' loading'}" id="sn-${d.id}">${skip?'—':'…'}</div><div class="sc-l">${d.name.split('—')[1]?.trim()||''}</div></div>`;
+  }).join('') + '<div class="sc"><div class="sc-ag sc-ag-JOBS">JOBS</div><div class="sc-n loading" id="sn-jobs">…</div><div class="sc-l">Job Filings</div></div>';
+
+  // Capture BIN at this point — either from BIN mode input or from pre-lookup
+
+  // Fire fetches
+  let done=0;
+  const results = await Promise.all(DSETS.map(async(d)=>{
+    let url = mode==='bin' ? d.byBIN(bin) : d.byAddr(h,s,b);
+    if(!url) return {ds:d, rows:[], skipped:true};
+
+    const fallbackUrl = mode==='addr' && d.fallbackAddr ? d.fallbackAddr(h,s,b) : null;
+    const r = await safeFetch(d, url, fallbackUrl);
+    latestResults[d.id] = r;
+    done++;
+    document.getElementById('barTxt').textContent=`Fetched ${done} datasets…`;
+
+    const el=document.getElementById('sn-'+d.id);
+    if(el){
+      el.classList.remove('loading');
+      if(r.err){ el.textContent='Err'; el.classList.add('e'); }
+      else {
+        // Count open rows only
+        const resolved_keywords = ['CLOSE','RESOLV','DISMISS','COMPLI','RESCIND','CERTIF','CORRECT','INACTIVE','COMPLY','SIGNED OFF','APPROVED','PERMIT ENTIRE','LOC ISSUED','COMPLETE','PERMIT ISSUED'];
+        let openCnt = r.rows.length;
+        try {
+          openCnt = r.rows.filter(row => {
+            const val = (row[d.sc]||'').toString().toUpperCase();
+            return !resolved_keywords.some(v => val.includes(v));
+          }).length;
+        } catch(e) {}
+        el.textContent = String(openCnt);
+        if(openCnt === 0) el.classList.add('z');
+        else if(d.tag==='ECB')                         el.style.color='#f87171';
+        else if(d.tag==='HPD' && openCnt >= 10)        el.style.color='#f87171';
+        else if(d.tag==='HPD' && openCnt > 0)          el.style.color='#f97316';
+        else if(d.tag==='DOB' && openCnt >= 5)         el.style.color='#f97316';
+        else                                           el.style.color='var(--gold)';
+      }
+    }
+    return r;
+  }));
+
+  // Filter out any undefined results (safety net)
+  const safeResults = results.filter(r => r && r.ds);
+
+  // Deduplicate DOB BIS vs DOB NOW — remove from BIS any violation_number that exists in NOW
+  try {
+    const dobNow = safeResults.find(r => r.ds.id === 'dob_safe');
+    const dobBis = safeResults.find(r => r.ds.id === 'dob_v');
+    if (dobNow && dobBis && dobNow.rows.length && dobBis.rows.length) {
+      const nowNums = new Set(dobNow.rows.map(r => r.violation_number).filter(Boolean));
+      const before = dobBis.rows.length;
+      dobBis.rows = dobBis.rows.filter(r => !r.violation_number || !nowNums.has(r.violation_number));
+      const removed = before - dobBis.rows.length;
+      if (removed > 0) console.log(`[Dedup] Removed ${removed} DOB BIS violations already in DOB NOW`);
+    }
+  } catch(e) {}
+
+  // Sort: results first, skipped last, errors before skipped
+  // Fixed display order — consistent across all searches
+  const _ORDER = [
+    'hpd_v',           // 1. HPD Housing Violations
+    'dob_v',           // 2. DOB Building Violations (BIS)
+    'dob_safe',        // 3. DOB Safety Violations (NOW)
+    'ecb',             // 4. ECB / OATH Summonses
+    's311',            // 5. 311 All Service Requests
+    'dsny',            // 6. DSNY Sanitation
+    'fdny',            // 7. FDNY Fire Complaints
+    'dob_complaints',  // 8. DOB Complaints
+    'jobs_bis',        // 9. DOB Job Filings (BIS)
+    'jobs_now',        // 10. DOB Job Filings (NOW)
+    'permits_bis',     // 11. Permits Active (BIS)
+    'permits_now',     // 12. Permits Active (NOW)
+  ];
+  try { safeResults.sort((a,b)=>{
+    const ai = _ORDER.indexOf(a.ds.id);
+    const bi = _ORDER.indexOf(b.ds.id);
+    const ap = ai === -1 ? 999 : ai;
+    const bp = bi === -1 ? 999 : bi;
+    return ap - bp;
+  }); } catch(e) { console.error('sort error:', e); }
+
+  try {
+    document.getElementById('results').innerHTML=safeResults.map(r => { try { return renderBlock(r); } catch(e) { console.error('renderBlock error:', e, r.ds.id); return ''; }}).join('');
+  } catch(e) { console.error('render error:', e); }
+  try { renderWarnings(safeResults); } catch(e) { console.error('renderWarnings error:', e); }
+  try { updateBinHealth(safeResults); } catch(e) {}
+  try { renderDecisionDashboard(safeResults); } catch(e) { console.error('renderDecisionDashboard error:', e); }
+
+  // ── BIN-ONLY SECOND PASS ──────────────────────────────────────────────
+  // If address search found a BIN, fetch BIN-only datasets and re-render
+  // This keeps everything in the same pipeline — no appending out of order
+  if (mode === 'addr' && foundBIN) {
+    const _binOnlyIds = ['dob_v','permits_bis','permits_now'];
+    const _binOnlyDs  = DSETS.filter(d => _binOnlyIds.includes(d.id));
+    if (_binOnlyDs.length) {
+      if (searchId !== activeSearchId) return;
+    const binOnlyResults = await Promise.all(_binOnlyDs.map(async d => {
+        const key = autoFetchKey(foundBIN, d.id);
+        if (autoFetched.has(key)) return latestResults[d.id] || {ds:d, rows:[], skipped:true};
+        autoFetched.add(key);
+        const url = d.byBIN(foundBIN);
+        if (!url) return {ds:d, rows:[], skipped:true};
+        const r = await safeFetch(d, url, null);
+        latestResults[d.id] = r;
+        return r;
+      }));
+    if (searchId !== activeSearchId) return;
+      // Merge into safeResults — replace any skipped placeholders
+      const merged = [...safeResults];
+      binOnlyResults.forEach(r => {
+        const idx = merged.findIndex(x => x.ds.id === r.ds.id);
+        if (idx !== -1) merged[idx] = r;
+        else merged.push(r);
+      });
+      // Re-render in fixed order
+      try {
+        merged.sort((a,b)=>{
+          const ai=_ORDER.indexOf(a.ds.id), bi=_ORDER.indexOf(b.ds.id);
+          return (ai===-1?999:ai)-(bi===-1?999:bi);
+        });
+        document.getElementById('results').innerHTML =
+          merged.map(r => { try { return renderBlock(r); } catch(e) { return ''; }}).join('');
+      } catch(e) {}
+      try { renderWarnings(merged); } catch(e) {}
+      try { updateBinHealth(merged); } catch(e) {}
+      try { renderDecisionDashboard(merged); } catch(e) {}
+      // Update summary tiles for new datasets
+      binOnlyResults.forEach(r => {
+        const el = document.getElementById('sn-'+r.ds.id);
+        if (!el) return;
+        el.classList.remove('loading','z');
+        el.textContent = r.err ? 'Err' : String(r.rows.length);
+        if (r.rows.length > 0) el.style.color = 'var(--gold)';
+        else el.classList.add('z');
+      });
+    }
+  }
+
+  // ECB amount owed summary for address/BIN mode
+  try {
+    const ecbRes = safeResults.find(r => r.ds.id === 'ecb');
+    if (ecbRes && !ecbRes.err && ecbRes.rows.length) {
+      const hasAmounts = ecbRes.rows.some(r => r.penalty_imposed || r.amount_paid || r.balance_due);
+      if (hasAmounts) {
+        let totalPenalty=0, totalPaid=0, totalBalance=0;
+        ecbRes.rows.forEach(row => {
+          const penalty = parseFloat(row.penalty_imposed || 0);
+          const paid    = parseFloat(row.amount_paid || 0);
+          const balance = row.balance_due != null ? parseFloat(row.balance_due) : (penalty - paid);
+          totalPenalty += penalty; totalPaid += paid; totalBalance += balance;
+        });
+        const fmt$ = n => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const owedHtml = `<div class="owed-box">
+          <div class="owed-item"><div class="owed-label">ECB Penalty Imposed</div>
+            <div class="owed-val warn">${fmt$(totalPenalty)}</div></div>
+          <div class="owed-item"><div class="owed-label">Amount Paid</div>
+            <div class="owed-val ok">${fmt$(totalPaid)}</div></div>
+          <div class="owed-item"><div class="owed-label">Balance Due</div>
+            <div class="owed-val ${totalBalance > 0 ? 'bad' : 'ok'}">${fmt$(totalBalance)}</div></div>
+        </div>`;
+        document.getElementById('results').insertAdjacentHTML('afterbegin', owedHtml);
+      }
+    }
+  } catch(e) {}
+
+
+  // Update merged JOBS summary tile
+  try {
+    const jBis  = safeResults.find(r=>r.ds.id==='jobs_bis');
+    const jNow  = safeResults.find(r=>r.ds.id==='jobs_now');
+    const jCount= (jBis?.rows?.length||0)+(jNow?.rows?.length||0);
+    const jErr  = jBis?.err && jNow?.err;
+    const jEl   = document.getElementById('sn-jobs');
+    if(jEl){
+      jEl.className = 'sc-n' + (jErr?' e': jCount===0?' z':'');
+      jEl.style.fontSize = jErr ? '0.88rem' : '';
+      jEl.textContent = jErr ? 'Err' : String(jCount);
+    }
+  } catch(e) {}
+
+  const total=safeResults.reduce((n,r)=>n+(r.rows?.length||0),0);
+  const errs=safeResults.filter(r=>r.err).length;
+  document.getElementById('spin').style.display='none';
+  document.getElementById('barTxt').textContent=
+    `Done — ${total} records${errs?` (${errs} errored)`:''}${foundBIN?' · BIN '+foundBIN+' found — click to copy':' · BIN not found in results'}.`;
+  document.getElementById(btnId).disabled=false;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SIDEBAR — CLIENT & PROPERTY MANAGER
+// Data stored in localStorage under key 'gcc_clients'
+// Structure: [ { id, name, phone, email, notes, props: [
+//   { id, nickname, houseNo, street, boro, bin, type, notes }
+// ]} ]
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── DATA LAYER ─────────────────────────────────────────────────────────────
+
+function loadClients() {
+  try { return JSON.parse(localStorage.getItem('gcc_clients') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveClients(clients) {
+  localStorage.setItem('gcc_clients', JSON.stringify(clients));
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+// Track which client sections are open
+const openClients = new Set();
+let activePropertyId = null;
+
+// ── RENDER SIDEBAR ──────────────────────────────────────────────────────────
+
+
+let sidebarRenderTimer = null;
+function scheduleSidebarRender(){
+  clearTimeout(sidebarRenderTimer);
+  sidebarRenderTimer = setTimeout(renderSidebar, 120);
+}
+
+function renderSidebar() {
+  const clients = loadClients();
+  const q = (document.getElementById('sbSearch')?.value || '').toLowerCase();
+  const list = document.getElementById('sbList');
+  if (!list) return;
+
+  if (!clients.length) {
+    list.innerHTML = `<div class="sb-empty">No clients yet.<br>Click <span>+ Add Client</span><br>to get started.</div>`;
+    return;
+  }
+
+  // Filter by search query
+  const filtered = clients.map(c => {
+    if (!q) return c;
+    const matchClient = c.name.toLowerCase().includes(q);
+    const matchedProps = (c.props||[]).filter(p =>
+      p.nickname?.toLowerCase().includes(q) ||
+      p.street?.toLowerCase().includes(q) ||
+      p.houseNo?.toLowerCase().includes(q)
+    );
+    if (matchClient || matchedProps.length) {
+      return {...c, props: matchClient ? (c.props||[]) : matchedProps};
+    }
+    return null;
+  }).filter(Boolean);
+
+  list.innerHTML = filtered.map(client => {
+    const isOpen = openClients.has(client.id);
+    const props  = client.props || [];
+    const tagClass = {
+      'Residential':'res','Commercial':'com','Mixed-Use':'mix','Industrial':''
+    };
+
+    const propsHtml = props.map(p => {
+      const isActive = activePropertyId === p.id;
+      const tc = tagClass[p.type] || '';
+      return `<div class="sb-prop${isActive?' active':''}" id="prop-${p.id}"
+                   onclick="launchProperty('${client.id}','${p.id}')">
+        <div class="sb-prop-health ${p.health||''}" title="${p.health?('Last health: '+p.health):'No recent status'}"></div>
+        <div class="sb-prop-icon">📍</div>
+        <div class="sb-prop-info">
+          <div class="sb-prop-name">${htmlEsc(p.nickname || p.street)}</div>
+          <div class="sb-prop-addr">${htmlEsc(p.houseNo)} ${htmlEsc(p.street)}, ${htmlEsc(p.boro)}${p.bin?' · BIN '+p.bin:''}${p.openCount!==undefined?' · Open '+p.openCount:''}${p.lastSearched?' · '+new Date(p.lastSearched).toLocaleDateString():''}</div>
+          ${p.notes ? `<div class="sb-prop-notes">${htmlEsc(p.notes.slice(0,60))}${p.notes.length>60?'…':''}</div>` : ''}${p.actionCount?`<span class="sb-meta-badge">${p.actionCount} Action${p.actionCount!==1?'s':''}</span>`:''}
+        </div>
+        ${p.type?`<div class="sb-prop-tag ${tc}">${p.type.slice(0,3)}</div>`:''}
+        <div class="sb-prop-actions">
+          <button class="sb-icon-btn" onclick="event.stopPropagation();openPropModal('${client.id}','${p.id}')" title="Edit">✎</button>
+          <button class="sb-icon-btn del" onclick="event.stopPropagation();deleteProp('${client.id}','${p.id}')" title="Delete">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="sb-client" id="client-${client.id}">
+      <div class="sb-client-header" onclick="toggleClient('${client.id}')">
+        <span class="sb-client-arrow${isOpen?' open':''}">▶</span>
+        <span class="sb-client-name">${htmlEsc(client.name)}</span>
+        <span class="sb-client-count">${props.length}</span>
+        <div class="sb-client-actions" onclick="event.stopPropagation()">
+          <button class="sb-icon-btn" onclick="openClientModal('${client.id}')" title="Edit">✎</button>
+          <button class="sb-icon-btn del" onclick="deleteClient('${client.id}')" title="Delete">✕</button>
+        </div>
+      </div>
+      <div class="sb-props${isOpen?' open':''}">
+        ${propsHtml}
+        <div class="sb-add-prop" onclick="openPropModal('${client.id}')">＋ Add property</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── INTERACTIONS ────────────────────────────────────────────────────────────
+
+function toggleClient(cid) {
+  if (openClients.has(cid)) openClients.delete(cid);
+  else openClients.add(cid);
+  renderSidebar();
+}
+
+// Launch a saved property — auto-fill the address form and run search
+function launchProperty(cid, pid) {
+  const clients = loadClients();
+  const client  = clients.find(c => c.id === cid);
+  if (!client) return;
+  const prop = (client.props||[]).find(p => p.id === pid);
+  if (!prop) return;
+
+  activePropertyId = pid;
+  // Update last searched timestamp
+  const clients2 = loadClients();
+  clients2.forEach(c => {
+    (c.props||[]).forEach(p => {
+      if (p.id === pid) p.lastSearched = new Date().toISOString();
+    });
+  });
+  saveClients(clients2);
+  renderSidebar();
+
+  // Switch to address mode if we have address, BIN mode if only BIN
+  if (prop.bin && !prop.houseNo) {
+    setMode('bin');
+    document.getElementById('binInput').value = prop.bin;
+  } else {
+    setMode('addr');
+    document.getElementById('houseNo').value  = prop.houseNo || '';
+    document.getElementById('street').value   = prop.street  || '';
+    // Set borough dropdown
+    const boroEl = document.getElementById('boro');
+    if (boroEl) {
+      Array.from(boroEl.options).forEach(o => {
+        if (o.value === (prop.boro||'').toUpperCase()) o.selected = true;
+      });
+    }
+  }
+
+  // Run the search
+  go();
+
+  // On mobile, close sidebar
+  document.getElementById('sidebar')?.classList.remove('mobile-open');
+}
+
+// After a BIN is found in results, auto-save it back to the property
+function saveBINToProperty(bin) {
+  if (!activePropertyId) return;
+  const clients = loadClients();
+  clients.forEach(c => {
+    (c.props||[]).forEach(p => {
+      if (p.id === activePropertyId && !p.bin) p.bin = bin;
+    });
+  });
+  saveClients(clients);
+  renderSidebar();
+}
+
+// ── CLIENT MODAL ────────────────────────────────────────────────────────────
+
+function openClientModal(cid) {
+  const clients = loadClients();
+  const client  = cid ? clients.find(c => c.id === cid) : null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sb-modal-overlay';
+  overlay.id = 'sbModalOverlay';
+  overlay.innerHTML = `
+    <div class="sb-modal">
+      <div class="sb-modal-title">${client ? 'Edit Client' : 'New Client'}</div>
+      <div class="fg"><label>Client Name *</label>
+        <input id="m-name" type="text" placeholder="e.g. John Smith" value="${client?.name||''}"/></div>
+      <div class="fg"><label>Phone</label>
+        <input id="m-phone" type="text" placeholder="(917) 555-0000" value="${client?.phone||''}"/></div>
+      <div class="fg"><label>Email</label>
+        <input id="m-email" type="email" placeholder="john@example.com" value="${client?.email||''}"/></div>
+      <div class="fg"><label>Notes</label>
+        <textarea id="m-notes" placeholder="Any notes about this client…">${client?.notes||''}</textarea></div>
+      <div class="sb-modal-btns">
+        <button class="sb-modal-cancel" onclick="closeModal()">Cancel</button>
+        <button class="sb-modal-save" onclick="saveClient('${cid||''}')">Save Client</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('m-name').focus();
+}
+
+function saveClient(cid) {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { alert('Client name is required.'); return; }
+  const clients = loadClients();
+  if (cid) {
+    const c = clients.find(c => c.id === cid);
+    if (c) { c.name=name; c.phone=document.getElementById('m-phone').value.trim();
+      c.email=document.getElementById('m-email').value.trim();
+      c.notes=document.getElementById('m-notes').value.trim(); }
+  } else {
+    clients.push({ id:uid(), name, phone:document.getElementById('m-phone').value.trim(),
+      email:document.getElementById('m-email').value.trim(),
+      notes:document.getElementById('m-notes').value.trim(), props:[] });
+  }
+  saveClients(clients);
+  closeModal();
+  renderSidebar();
+}
+
+function deleteClient(cid) {
+  if (!confirm('Delete this client and all their properties?')) return;
+  const clients = loadClients().filter(c => c.id !== cid);
+  saveClients(clients);
+  renderSidebar();
+}
+
+// ── PROPERTY MODAL ──────────────────────────────────────────────────────────
+
+function openPropModal(cid, pid) {
+  const clients = loadClients();
+  const client  = clients.find(c => c.id === cid);
+  const prop    = pid ? (client?.props||[]).find(p => p.id === pid) : null;
+
+  // Pre-fill from current search if adding new
+  const curHouse = document.getElementById('houseNo')?.value || '';
+  const curStreet= document.getElementById('street')?.value  || '';
+  const curBoro  = document.getElementById('boro')?.value    || 'MANHATTAN';
+  const curBin   = document.getElementById('binVal')?.textContent !== '—'
+                   ? document.getElementById('binVal')?.textContent : '';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sb-modal-overlay';
+  overlay.id = 'sbModalOverlay';
+  overlay.innerHTML = `
+    <div class="sb-modal">
+      <div class="sb-modal-title">${prop ? 'Edit Property' : 'Add Property'}</div>
+      <div style="font-size:0.72rem;color:var(--gray);margin-bottom:14px">
+        Adding to: <strong style="color:var(--white)">${client?.name}</strong></div>
+      <div class="fg"><label>Nickname (optional)</label>
+        <input id="p-nick" type="text" placeholder="e.g. Main Building, Warehouse" value="${prop?.nickname||''}"/></div>
+      <div style="display:grid;grid-template-columns:90px 1fr;gap:10px">
+        <div class="fg"><label>House #</label>
+          <input id="p-house" type="text" value="${prop?.houseNo||curHouse}"/></div>
+        <div class="fg"><label>Street Name</label>
+          <input id="p-street" type="text" value="${prop?.street||curStreet}"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg"><label>Borough</label>
+          <select id="p-boro">
+            ${['MANHATTAN','BRONX','BROOKLYN','QUEENS','STATEN ISLAND'].map(b=>
+              `<option value="${b}" ${(prop?.boro||curBoro)===b?'selected':''}>${b.charAt(0)+b.slice(1).toLowerCase()}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="fg"><label>Building Type</label>
+          <select id="p-type">
+            ${['','Residential','Commercial','Mixed-Use','Industrial'].map(t=>
+              `<option value="${t}" ${(prop?.type||'')===t?'selected':''}>${t||'Select…'}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>BIN (auto-filled after search)</label>
+        <input id="p-bin" type="text" placeholder="7-digit BIN" value="${prop?.bin||curBin}"
+               oninput="this.value=this.value.replace(/\D/g,'').slice(0,7)"/></div>
+      <div class="fg"><label>Notes</label>
+        <textarea id="p-notes" placeholder="Unit count, owner info, anything relevant…">${prop?.notes||''}</textarea></div>
+      <div class="sb-modal-btns">
+        <button class="sb-modal-cancel" onclick="closeModal()">Cancel</button>
+        <button class="sb-modal-save" onclick="saveProp('${cid}','${pid||''}')">Save Property</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('p-nick').focus();
+}
+
+function saveProp(cid, pid) {
+  const houseNo = document.getElementById('p-house').value.trim();
+  const street  = document.getElementById('p-street').value.trim();
+  if (!houseNo || !street) { alert('House number and street name are required.'); return; }
+  const clients = loadClients();
+  const client  = clients.find(c => c.id === cid);
+  if (!client) return;
+
+  const data = {
+    houseNo, street,
+    boro:     document.getElementById('p-boro').value,
+    type:     document.getElementById('p-type').value,
+    bin:      document.getElementById('p-bin').value.trim(),
+    nickname: document.getElementById('p-nick').value.trim(),
+    notes:    document.getElementById('p-notes').value.trim()
+  };
+
+  if (pid) {
+    const p = (client.props||[]).find(p => p.id === pid);
+    if (p) Object.assign(p, data);
+  } else {
+    if (!client.props) client.props = [];
+    client.props.push({ id: uid(), ...data });
+    openClients.add(cid); // auto-open client when adding property
+  }
+  saveClients(clients);
+  closeModal();
+  renderSidebar();
+}
+
+function deleteProp(cid, pid) {
+  if (!confirm('Remove this property?')) return;
+  const clients = loadClients();
+  const client  = clients.find(c => c.id === cid);
+  if (client) client.props = (client.props||[]).filter(p => p.id !== pid);
+  saveClients(clients);
+  if (activePropertyId === pid) activePropertyId = null;
+  renderSidebar();
+}
+
+function closeModal() {
+  document.getElementById('sbModalOverlay')?.remove();
+}
+
+// Close modal on overlay click
+document.addEventListener('click', e => {
+  if (e.target.id === 'sbModalOverlay') closeModal();
+});
+
+
+// ── SIDEBAR TOGGLE ──────────────────────────────────────────────────────────
+// Remembers open/closed state in localStorage
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const btn     = document.getElementById('sbToggleBtn');
+  if (!sidebar) return;
+  const isCollapsed = sidebar.classList.contains('collapsed');
+  if (isCollapsed) {
+    sidebar.classList.remove('collapsed');
+    btn.style.color = 'var(--gold)';
+    localStorage.setItem('gcc_sidebar', 'open');
+  } else {
+    sidebar.classList.add('collapsed');
+    btn.style.color = 'var(--gray)';
+    localStorage.setItem('gcc_sidebar', 'closed');
+  }
+}
+
+// Apply remembered sidebar state on load
+document.addEventListener('DOMContentLoaded', function() {
+  const state   = localStorage.getItem('gcc_sidebar');
+  const sidebar = document.getElementById('sidebar');
+  const btn     = document.getElementById('sbToggleBtn');
+  if (!sidebar || !btn) return;
+  if (state === 'closed') {
+    sidebar.classList.add('collapsed');
+    btn.style.color = 'var(--gray)';
+  } else {
+    btn.style.color = 'var(--gold)';
+  }
+});
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+renderSidebar();
+
+
+// ── SAVE LOCATION MODAL ────────────────────────────────────────────────────
+// Opens after a search — lets user pick a client and save the current address
+
+function openSaveModal() {
+  const clients = loadClients();
+
+  // Get current search state
+  const mode    = currentMode;
+  const houseNo = document.getElementById('houseNo')?.value.trim() || '';
+  const street  = document.getElementById('street')?.value.trim()  || '';
+  const boro    = document.getElementById('boro')?.value            || 'MANHATTAN';
+  const bin     = foundBIN || '';
+
+  if (!houseNo && !bin) {
+    alert('Search a location first before saving.');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sb-modal-overlay';
+  overlay.id = 'sbModalOverlay';
+
+  const clientsHtml = clients.length
+    ? `<div class="client-picker" id="clientPicker">
+        ${clients.map(c => `
+          <div class="client-option" id="co-${c.id}" onclick="selectClient('${c.id}')">
+            <span class="client-option-name">${c.name}</span>
+            <span class="client-option-count">${(c.props||[]).length} properties</span>
+          </div>`).join('')}
+      </div>`
+    : `<div class="no-clients-msg">
+        No clients yet. 
+        <span style="color:var(--gold);cursor:pointer" onclick="closeModal();openClientModal()">
+          Add a client first →
+        </span>
+      </div>`;
+
+  overlay.innerHTML = `
+    <div class="sb-modal">
+      <div class="sb-modal-title">Save This Location</div>
+      <div style="background:rgba(9,15,30,0.6);border:1px solid var(--border);
+                  padding:12px 14px;border-radius:2px;margin-bottom:20px">
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.14em;
+                    text-transform:uppercase;color:var(--gray);margin-bottom:4px">Location</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;
+                    font-weight:700;color:var(--white)">
+          ${houseNo} ${street}${boro ? ', ' + boro.charAt(0)+boro.slice(1).toLowerCase() : ''}
+        </div>
+        ${bin ? `<div style="font-size:0.72rem;color:var(--gold);margin-top:3px">BIN: ${bin}</div>` : ''}
+      </div>
+
+      <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.14em;
+                  text-transform:uppercase;color:var(--gray);margin-bottom:10px">
+        Select Client
+      </div>
+      ${clientsHtml}
+
+      ${clients.length ? `
+      <div class="fg" style="margin-top:14px">
+        <label>Nickname (optional)</label>
+        <input id="save-nick" type="text" placeholder="e.g. Main Building, Warehouse"/>
+      </div>
+      <div class="fg">
+        <label>Building Type</label>
+        <select id="save-type">
+          ${['','Residential','Commercial','Mixed-Use','Industrial'].map(t =>
+            `<option value="${t}">${t||'Select…'}</option>`
+          ).join('')}
+        </select>
+      </div>` : ''}
+
+      <div class="sb-modal-btns">
+        <button class="sb-modal-cancel" onclick="closeModal()">Cancel</button>
+        ${clients.length ? `<button class="sb-modal-save" onclick="saveCurrentLocation('${houseNo}','${street}','${boro}','${bin}')">Save</button>` : ''}
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+}
+
+let selectedClientId = null;
+
+function selectClient(cid) {
+  selectedClientId = cid;
+  document.querySelectorAll('.client-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById('co-' + cid)?.classList.add('selected');
+}
+
+function saveCurrentLocation(houseNo, street, boro, bin) {
+  if (!selectedClientId) {
+    alert('Please select a client first.');
+    return;
+  }
+  const clients  = loadClients();
+  const client   = clients.find(c => c.id === selectedClientId);
+  if (!client) return;
+
+  const nickname = document.getElementById('save-nick')?.value.trim() || '';
+  const type     = document.getElementById('save-type')?.value || '';
+
+  if (!client.props) client.props = [];
+  client.props.push({
+    id: uid(),
+    houseNo, street, boro, bin,
+    nickname, type, notes: ''
+  });
+
+  saveClients(clients);
+  selectedClientId = null;
+
+  // Auto-open this client in the sidebar
+  openClients.add(client.id);
+  renderSidebar();
+  closeModal();
+
+  // Show confirmation on the save button
+  const btn = document.getElementById('saveLocBtn');
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ Saved!';
+    btn.style.background = 'rgba(82,192,122,0.25)';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2000);
+  }
+}
+
+
+
+// ── ZONING & LAND USE DESCRIPTIONS ────────────────────────────────────────
+function zoningDesc(code) {
+  if (!code) return '';
+  const c = code.toUpperCase().trim();
+  // Residential
+  if (c.startsWith('R')) {
+    const map = {
+      'R1':'Low-Density Residential','R2':'Low-Density Residential',
+      'R3':'Low-Density Residential','R4':'Low-Density Residential',
+      'R5':'Medium-Density Residential','R6':'Medium-Density Residential',
+      'R7':'Medium-Density Residential','R8':'High-Density Residential',
+      'R9':'High-Density Residential','R10':'High-Density Residential'
+    };
+    const base = c.replace(/[A-Z]$/,'').replace(/[^R\d]/g,'R');
+    return map[base] || 'Residential';
+  }
+  // Commercial
+  if (c.startsWith('C')) {
+    const n = parseInt(c.replace(/\D/g,''));
+    if (n <= 2) return 'Local Retail Commercial';
+    if (n <= 4) return 'General Commercial';
+    if (n <= 6) return 'Regional Commercial';
+    if (n <= 8) return 'Central Business District';
+    return 'Commercial';
+  }
+  // Manufacturing
+  if (c.startsWith('M')) {
+    const n = parseInt(c.replace(/\D/g,''));
+    if (n === 1) return 'Light Industrial';
+    if (n === 2) return 'Medium Industrial';
+    if (n === 3) return 'Heavy Industrial';
+    return 'Manufacturing/Industrial';
+  }
+  // Special districts
+  if (c.startsWith('SP')) return 'Special Purpose District';
+  if (c.startsWith('BP')) return 'Business Park';
+  return '';
+}
+
+function landUseDesc(code) {
+  const map = {
+    '01':'One & Two Family Buildings',
+    '02':'Multi-Family Walk-Up Buildings',
+    '03':'Multi-Family Elevator Buildings',
+    '04':'Mixed Residential & Commercial',
+    '05':'Commercial & Office Buildings',
+    '06':'Industrial & Manufacturing',
+    '07':'Transportation & Utility',
+    '08':'Public Facilities & Institutions',
+    '09':'Open Space & Recreation',
+    '10':'Parking Facilities',
+    '11':'Vacant Land'
+  };
+  const k = String(code||'').padStart(2,'0');
+  return map[k] || '';
+}
+
+// ── BUILDING PROFILE ───────────────────────────────────────────────────────
+// Fetches building info from PLUTO (DCP) using BIN
+// PLUTO fields: numfloors, unitsres, unitstotal, bldgclass, yearbuilt,
+//   yearalter1, ownername, lotarea, bldgarea, zonedist1, address, landuse
+// Also fetches HPD building registration for: lifecycle, legalstories, legalclassa
+
+const BLDG_CLASS_MAP = {
+  'A':'One Family Dwelling','B':'Two Family Dwelling','C':'Walk-Up Apartment',
+  'D':'Elevator Apartment','E':'Warehouse/Factory/Industrial','F':'Garage/Gas Station',
+  'H':'Hotel','I':'Hospital/Health Facility','J':'Theatre',
+  'K':'Store Building','L':'Loft Building','M':'Religious Facility',
+  'N':'Asylum/Home','O':'Office Building','P':'Public Facility',
+  'Q':'Outdoor Recreation','R':'Condo','RR':'Condo Rentals',
+  'S':'Mixed Residential & Commercial','T':'Transportation Facility',
+  'U':'Utility','V':'Vacant Land','W':'Educational Facility',
+  'Y':'Government','Z':'Misc'
+};
+
+function bldgClassDesc(code) {
+  if (!code) return '—';
+  const key = code.charAt(0).toUpperCase();
+  return BLDG_CLASS_MAP[key] ? `${code} — ${BLDG_CLASS_MAP[key]}` : code;
+}
+
+async function fetchBuildingProfile(bin) {
+  let plutoData = [];
+  const panel = document.getElementById('buildingProfile');
+  if (!panel) return;
+  panel.classList.add('loaded');
+  panel.innerHTML = '<div class="bp-loading"><div class="spin" style="width:14px;height:14px;border-width:2px;display:inline-block;border-radius:50%;border-color:rgba(201,160,48,0.2);border-top-color:var(--gold);animation:sp 0.7s linear infinite"></div><span style="margin-left:10px;font-size:0.82rem;color:var(--gray)">Loading building profile…</span></div>';
+
+  try {
+    // Get current address from form for fallback
+    let formHouse  = (document.getElementById('houseNo')?.value||'').trim().toUpperCase();
+    let formStreet = normalizeStreet((document.getElementById('street')?.value||'').trim()).toUpperCase();
+
+    // Use NYC GeoSearch API to get BBL, then query PLUTO by BBL
+    // GeoSearch is the official NYC geocoder — handles all address formats perfectly
+    let plutoUrl = null;
+    let bbl = null;
+    let effectiveHouse = formHouse, effectiveStreet = formStreet;
+
+    // BIN mode: look up address from HPD buildings so PLUTO can be queried
+    console.log('[BIN Profile] bin:', bin, 'formHouse:', formHouse, 'formStreet:', formStreet);
+    if ((!formHouse || !formStreet) && bin) {
+      try {
+        const hbRes = await fetch(`https://data.cityofnewyork.us/resource/kj4p-ruqc.json?$where=${enc(`bin='${parseInt(bin)||0}'`)}&$limit=1`,{headers:TOKEN_HEADER});
+        console.log('[BIN Profile] HPD buildings status:', hbRes.status);
+        if (hbRes.ok) {
+          const hbRows = await hbRes.json();
+          console.log('[BIN Profile] HPD rows:', hbRows.length, hbRows[0] ? JSON.stringify({h:hbRows[0].housenumber,s:hbRows[0].streetname}) : 'empty');
+          if (hbRows[0]) {
+            effectiveHouse  = hbRows[0].housenumber || hbRows[0].lowhousenumber || '';
+            effectiveStreet = hbRows[0].streetname  || '';
+          }
+        }
+      } catch(e) { console.log('[BIN Profile] HPD error:', e.message); }
+      console.log('[BIN Profile] effective:', effectiveHouse, effectiveStreet);
+      if (effectiveHouse) { formHouse = effectiveHouse; formStreet = effectiveStreet; }
+    }
+
+    if (effectiveHouse && effectiveStreet) {
+      try {
+        const borough = (document.getElementById('boro')?.value || 'MANHATTAN').toLowerCase();
+        const geoQuery = encodeURIComponent(`${effectiveHouse} ${effectiveStreet} ${borough}`);
+        const geoRes = await fetch(`https://geosearch.planninglabs.nyc/v2/search?text=${geoQuery}&size=1`);
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          const feat = geoData?.features?.[0];
+          bbl = feat?.properties?.pad_bbl || feat?.properties?.bbl || feat?.properties?.addendum?.pad?.bbl;
+          if (bbl) {
+            plutoUrl = `https://data.cityofnewyork.us/resource/64uk-42ks.json?$where=${enc(`bbl='${bbl}'`)}&$limit=1`;
+          }
+        }
+      } catch(e) {}
+      if (!plutoUrl) {
+        plutoUrl = `https://data.cityofnewyork.us/resource/64uk-42ks.json?$where=${enc(`upper(address)='${effectiveHouse} ${effectiveStreet.toUpperCase()}'`)}&$limit=1`;
+      }
+    }
+    const plutoAddrAlt = null; // handled by GeoSearch now
+
+    const [plutoRes, hpdRes] = await Promise.all([
+      plutoUrl ? fetch(plutoUrl) : Promise.resolve({ok:false}),
+      fetch(`https://data.cityofnewyork.us/resource/kj4p-ruqc.json?$where=${enc(`bin='${bin}'`)}&$limit=1`, {headers:TOKEN_HEADER})
+    ]);
+
+    plutoData = (plutoUrl && plutoRes.ok) ? await plutoRes.json() : [];
+    // BIN mode: if PLUTO URL was null (no form address), try HPD buildings address
+    if (!plutoData.length && (!formHouse || !formStreet)) {
+      try {
+        const hpdBld = hpdRes.ok ? await hpdRes.clone().json().catch(()=>[]) : [];
+        const h0 = hpdBld[0];
+        if (h0?.housenumber && h0?.streetname) {
+          const bHouse = h0.housenumber.trim();
+          const bStreet = normalizeStreet(h0.streetname.trim());
+          const bblUrl = `https://geosearch.planninglabs.nyc/v2/search?text=${encodeURIComponent(bHouse+' '+bStreet+' New York')}&size=1`;
+          const bblRes = await fetch(bblUrl);
+          if (bblRes.ok) {
+            const bblData = await bblRes.json();
+            const bbl = bblData?.features?.[0]?.properties?.pad_bbl;
+            if (bbl) {
+              const pR = await fetch(`https://data.cityofnewyork.us/resource/64uk-42ks.json?$where=${enc(`bbl='${bbl}'`)}&$limit=1`, {headers:TOKEN_HEADER});
+              if (pR.ok) plutoData = await pR.json();
+            }
+          }
+        }
+      } catch(e) {}
+    }
+    // If BBL query failed, try direct address as last resort
+    if (!plutoData.length && formHouse && formStreet) {
+      try {
+        const likeUrl = `https://data.cityofnewyork.us/resource/64uk-42ks.json?$where=${enc(`upper(address) like '${formHouse} ${formStreet.toUpperCase()}%'`)}&$limit=1`;
+        const likeRes = await fetch(likeUrl);
+        if (likeRes.ok) plutoData = await likeRes.json();
+      } catch(e) {}
+    }
+    // BIN mode fallback — extract address from HPD buildings result
+    if (!plutoData.length) {
+      try {
+        const hpdSample = hpdRes.ok ? await hpdRes.clone().json().catch(()=>[]) : [];
+        const hpdAddr = hpdSample[0];
+        if (hpdAddr?.housenumber && hpdAddr?.streetname) {
+          const hNum = hpdAddr.housenumber.trim().toUpperCase();
+          const hStr = hpdAddr.streetname.trim().toUpperCase();
+          const binFallbackUrl = `https://data.cityofnewyork.us/resource/64uk-42ks.json?$where=${enc(`upper(address) like '${hNum} ${hStr}%'`)}&$limit=1`;
+          const binFallbackRes = await fetch(binFallbackUrl);
+          if (binFallbackRes.ok) plutoData = await binFallbackRes.json();
+        }
+      } catch(e) {}
+    }
+    const hpdData   = hpdRes.ok  ? await hpdRes.json()  : [];
+
+    const p = plutoData[0] || {};
+    const h = hpdData[0]  || {};
+
+    // Merge data from both sources
+    // Use search form address (reliable) rather than PLUTO's address field
+    const formAddrDisplay = formHouse && formStreet
+      ? `${formHouse} ${formStreet.replace(/\b\w+/g, w => isNaN(w) ? w.charAt(0).toUpperCase()+w.slice(1).toLowerCase() : w)}`
+      : (h.housenumber ? `${h.housenumber} ${h.streetname||''}`.trim() : '');
+    const address = formAddrDisplay || '—';
+    // Owner — PLUTO has ownername (all caps), HPD has first/last name
+    const rawOwner = p.ownername ||
+      (h.ownerfirstname ? `${h.ownerfirstname||''} ${h.ownerlastname||''}`.trim() : '');
+    const owner = rawOwner
+      ? rawOwner.replace(/\b\w+/g, w => isNaN(w) ? w.charAt(0).toUpperCase()+w.slice(1).toLowerCase() : w)
+      : '';
+    window._plutoOwner = owner; // store for entities section
+    window._plutoAddr = { house: formHouse, street: formStreet, plutoStreet: (p.address||'').split(' ').slice(1).join(' ') };
+    // Helper: clean PLUTO numeric strings like "3.0000000" → "3"
+    const cleanNum = v => v ? String(parseFloat(v)) : null;
+    const floors    = cleanNum(p.numfloors || h.legalstories) || '—';
+    const unitsRes  = cleanNum(p.unitsres  || h.legalclassa)  || '—';
+    const unitsAll  = cleanNum(p.unitstotal) || '—';
+    const bldgClass = p.bldgclass || '—';
+    const yearBuilt = cleanNum(p.yearbuilt) || '—';
+    const yearAlter = p.yearalter1 && parseFloat(p.yearalter1) > 0 ? cleanNum(p.yearalter1) : null;
+    const zoning    = p.zonedist1 || '—';
+    const lotArea   = p.lotarea   ? parseInt(p.lotarea).toLocaleString() + ' sf' : '—';
+    const bldgArea  = p.bldgarea  ? parseInt(p.bldgarea).toLocaleString() + ' sf' : '—';
+    const landUse   = p.landuse   || '—';
+
+    if (!plutoData.length && !hpdData.length) {
+      panel.innerHTML = '<div class="bp-loading" style="color:var(--gray);font-size:0.78rem;padding:14px 24px">Building profile not found in PLUTO dataset for this BIN.</div>';
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="bp-header">
+        <div class="bp-address">${address || (bin ? 'BIN ' + bin : '—')}</div>
+        ${owner ? `<div class="bp-owner"><span style="color:var(--gray);font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase">Owner on Record</span> &nbsp;<strong style="color:var(--white);font-size:0.88rem">${owner}</strong></div>` : ''}
+        <button onclick="openSaveModal()" id="saveLocBtn"
+          style="margin-left:auto;background:rgba(82,192,122,0.1);border:1px solid rgba(82,192,122,0.25);
+                 color:var(--green);padding:5px 14px;font-family:'Barlow Condensed',sans-serif;
+                 font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+                 border-radius:2px;cursor:pointer;white-space:nowrap;transition:all 0.18s;flex-shrink:0">
+          ＋ Save Location
+        </button>
+      </div>
+      <div class="bp-grid">
+        <div class="bp-stat">
+          <div class="bp-stat-label">Year Built</div>
+          <div class="bp-stat-val gold">${yearBuilt}</div>
+          ${yearAlter ? `<div class="bp-stat-sub">Altered: ${yearAlter}</div>` : ''}
+        </div>
+        <div class="bp-stat">
+          <div class="bp-stat-label">Floors</div>
+          <div class="bp-stat-val">${floors}</div>
+        </div>
+        <div class="bp-stat">
+          <div class="bp-stat-label">Residential Units</div>
+          <div class="bp-stat-val">${unitsRes}</div>
+          ${unitsAll !== '—' && unitsAll !== unitsRes ? `<div class="bp-stat-sub">Total: ${unitsAll}</div>` : ''}
+        </div>
+        <div class="bp-stat">
+          <div class="bp-stat-label">Building Class</div>
+          <div class="bp-stat-val" style="font-size:0.9rem">${bldgClassDesc(bldgClass)}</div>
+        </div>
+        <div class="bp-stat">
+          <div class="bp-stat-label">Zoning</div>
+          <div class="bp-stat-val">${zoning}</div>
+          ${zoningDesc(zoning) ? `<div class="bp-stat-sub">${zoningDesc(zoning)}</div>` : ''}
+        </div>
+        <div class="bp-stat">
+          <div class="bp-stat-label">Lot Area</div>
+          <div class="bp-stat-val" style="font-size:1rem">${lotArea}</div>
+        </div>
+        <div class="bp-stat">
+          <div class="bp-stat-label">Building Area</div>
+          <div class="bp-stat-val" style="font-size:1rem">${bldgArea}</div>
+        </div>
+        <div class="bp-stat">
+          <div class="bp-stat-label">Land Use</div>
+          <div class="bp-stat-val">${landUse}</div>
+          ${landUseDesc(landUse) ? `<div class="bp-stat-sub">${landUseDesc(landUse)}</div>` : ''}
+        </div>
+      </div>`;
+
+  } catch(e) {
+    panel.innerHTML = `<div class="bp-loading" style="color:var(--orange);font-size:0.78rem;padding:14px 24px">Could not load building profile: ${e.message}</div>`;
+  }
+  // Fetch CO status and entities regardless of PLUTO result
+  fetchCO(bin);
+  const _bbl = plutoData[0]?.bbl || null;
+  const _ownAddr = plutoData[0]?.address || null;
+  fetchOwnership(_bbl, bin, _ownAddr);
+  // Pass PLUTO landmark fields directly — avoids extra API call
+  const _plutoLandmark = plutoData[0]?.landmark || null;
+  const _plutoHistDist = plutoData[0]?.histdist  || null;
+  fetchLandmark(_bbl, bin, _plutoLandmark, _plutoHistDist);
+  fetchTaxLien(_bbl);
+  // Read form values for entities lookup
+  const _fh = (document.getElementById('houseNo')?.value||'').trim();
+  const _fs = (document.getElementById('street')?.value||'').trim();
+  fetchEntities(bin, _fh, _fs);
+}
+
+
+
+// ── LANDMARK STATUS ────────────────────────────────────────────────────────
+async function fetchLandmark(bbl, bin, plutoLandmark, plutoHistDist) {
+  if (!bbl && !bin && !plutoLandmark && !plutoHistDist) return;
+  // ── Fast path: PLUTO already has landmark/histdist fields ──────────────
+  const panel = document.getElementById('buildingProfile');
+  if (!panel) return;
+  panel.querySelector('.landmark-bar')?.remove();
+
+  if (plutoLandmark || plutoHistDist) {
+    const bar = document.createElement('div');
+    bar.className = 'landmark-bar';
+    if (plutoLandmark && plutoHistDist) {
+      bar.innerHTML = `<span class="lm-badge">🏛 Individual Landmark</span><span class="lm-detail">${plutoLandmark}</span><span class="lm-badge lm-hist" style="font-size:0.65rem;padding:2px 7px">+ ${plutoHistDist}</span><a class="co-link" href="https://www.nyc.gov/site/lpc/index.page" target="_blank">LPC ↗</a>`;
+    } else if (plutoLandmark) {
+      bar.innerHTML = `<span class="lm-badge">🏛 Individual Landmark</span><span class="lm-detail">${plutoLandmark}</span><a class="co-link" href="https://www.nyc.gov/site/lpc/index.page" target="_blank">LPC ↗</a>`;
+    } else {
+      bar.innerHTML = `<span class="lm-badge lm-hist">🏛 Historic District</span><span class="lm-detail">${plutoHistDist}</span><a class="co-link" href="https://www.nyc.gov/site/lpc/index.page" target="_blank">LPC ↗</a>`;
+    }
+    panel.appendChild(bar);
+    return; // PLUTO had the data — no API call needed
+  }
+
+  // PLUTO is the only source — if no landmark/histdist fields, property is not landmarked
+}
+
+
+// ── TAX LIEN ────────────────────────────────────────────────────────────────
+async function fetchTaxLien(bbl) {
+  if (!bbl) return;
+  const bblClean = String(parseInt(parseFloat(bbl))).padStart(10,'0');
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(
+      `https://data.cityofnewyork.us/resource/9rz4-mjek.json?$where=${enc(
+        `borough=${parseInt(bblClean[0])} AND block=${parseInt(bblClean.slice(1,6))} AND lot=${parseInt(bblClean.slice(6,10))}`)}&$limit=5`,
+      {signal: ctrl.signal}
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) return; // no lien — silent
+
+    // Build warning bar above results
+    const resultsEl = document.getElementById('results');
+    if (!resultsEl) return;
+    document.querySelector('.tax-lien-warn')?.remove();
+
+    const total = rows.reduce((s,r) => s + parseFloat(r.total_lien_amount||r.lien_amount||0), 0);
+    const fmt = total > 0 ? '$'+total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',') : '';
+
+    const warn = document.createElement('div');
+    warn.className = 'tax-lien-warn';
+    warn.innerHTML = `
+      <span class="tl-badge">⚠ Tax Lien on File</span>
+      <span class="tl-detail">${rows.length} lien record${rows.length>1?'s':''} found${fmt?' · Total: '+fmt:''}</span>
+      <a class="co-link" href="https://a836-acris.nyc.gov/DS/DocumentSearch/BBLResult?hb_borough=${bbl[0]}&hb_block=${parseInt(bbl.slice(1,6))}&hb_lot=${parseInt(bbl.slice(6))}" target="_blank">View ACRIS ↗</a>`;
+    resultsEl.insertAdjacentElement('beforebegin', warn);
+  } catch(e) {
+    if (e.name !== 'AbortError') console.log('[TaxLien] error:', e.message);
+  }
+}
+
+
+function toTC(s){ return s?(s+'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):''; }
+
+async function fetchOwnership(bbl, bin, address) {
+  const panel = document.getElementById('buildingProfile');
+  if (!panel) return;
+  panel.querySelector('.own-panel')?.remove();
+  const wrap = document.createElement('div');
+  wrap.className = 'own-panel';
+  wrap.innerHTML = `<div class="own-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.own-chevron').classList.toggle('open')"><span class="own-label">Ownership &amp; Registration</span><span class="own-chevron">▼</span></div><div class="own-body" id="ownBody"><div style="font-size:0.75rem;color:var(--gray);padding:6px 0">Loading…</div></div>`;
+  panel.appendChild(wrap);
+  const cards = [];
+  const ctrl = new AbortController();
+  setTimeout(()=>ctrl.abort(),12000);
+  if (bbl) {
+    try {
+      const bblClean=String(parseInt(parseFloat(bbl))).padStart(10,'0'), br=bblClean[0], bl=bblClean.slice(1,6), bt=bblClean.slice(6,10);
+      // Step 1: 8h5j-fqxa (legals) → get document_ids for this BBL
+      const lRes = await fetch(`https://data.cityofnewyork.us/resource/8h5j-fqxa.json?$where=${enc(`borough='${br}' AND block=${parseInt(bl)} AND lot=${parseInt(bt)}`)}&$limit=50`,{signal:ctrl.signal, headers:TOKEN_HEADER});
+      if (lRes.ok) {
+        const lRows = await lRes.json();
+        // Step 2: get doc_type from master for each document_id
+        const docIds = lRows.map(r=>r.document_id).filter(Boolean).slice(0,20);
+        let deed = null;
+        if (docIds.length) {
+          const mRes = await fetch(`https://data.cityofnewyork.us/resource/bnx9-e6tj.json?$where=${enc(`document_id in('${docIds.join("','")}')`)}&$limit=20`,{signal:ctrl.signal, headers:TOKEN_HEADER});
+          if (mRes.ok) {
+            const mRows = await mRes.json();
+            const DEED_TYPES = ['DEED','DEED, IN LIEU','DEED IN LIEU','ADMINISTRATOR','EXECUTOR','TRUSTEE','FORECLOSURE','GRANT','CONVEY'];
+            deed = mRows.find(r=>{
+              const d=(r.doc_type||'').toUpperCase();
+              return DEED_TYPES.some(t=>d.includes(t));
+            }) || null;
+          }
+        }
+        if (deed?.document_id) {
+          const pRes = await fetch(`https://data.cityofnewyork.us/resource/636b-3b5g.json?$where=${enc(`document_id='${deed.document_id}'`)}&$limit=10`,{signal:ctrl.signal, headers:TOKEN_HEADER});
+          if (pRes.ok) {
+            const parties = await pRes.json();
+            const dt = (deed.doc_date||deed.document_date||'').slice(0,20);
+            parties.filter(p=>p.party_type==='2'&&p.name).forEach(p=>{
+              const addr=[p.address_1,p.address_2,p.city,p.state,p.zip].filter(Boolean).map(toTC).join(', ');
+              cards.push({type:'Deed Owner (ACRIS)',name:toTC(p.name),addr,note:dt?`Deed: ${dt}`:'',link:`https://a836-acris.nyc.gov/DS/DocumentSearch/DocumentDetail?doc_id=${deed.document_id}`,linkLabel:'View Deed ↗'});
+            });
+          }        }
+      }
+    } catch(e){}
+  }
+  if (bin) {
+    try {
+      // Step 1: get registrationid from tesw-yqqr by BIN
+      let regId = null, regExpiry = '';
+      try {
+        const r1 = await fetch(`https://data.cityofnewyork.us/resource/tesw-yqqr.json?$where=${enc(`bin='${bin}'`)}&$order=registrationenddate DESC&$limit=1`,{signal:ctrl.signal, headers:TOKEN_HEADER});
+        if (r1.ok) {
+          const regRows = await r1.json();
+          if (regRows[0]) {
+            regId = regRows[0].registrationid;
+            regExpiry = regRows[0].registrationenddate||'';
+          }
+        }
+      } catch(e) {}
+
+      // Fallback: find registration by address if BIN missed
+      if (!regId && address) {
+        try {
+          const hNum = address.split(' ')[0];
+          const hStr = address.split(' ').slice(1).join(' ').toUpperCase();
+          const r2 = await fetch(`https://data.cityofnewyork.us/resource/tesw-yqqr.json?$where=${enc(`housenumber='${hNum}' AND upper(streetname) like '${normalizeStreet(hStr)}%'`)}&$order=registrationenddate DESC&$limit=1`,{signal:ctrl.signal, headers:TOKEN_HEADER});
+          if (r2.ok) {
+            const regRows2 = await r2.json();
+            if (regRows2[0]) { regId = regRows2[0].registrationid; regExpiry = regRows2[0].registrationenddate||''; }
+          }
+        } catch(e) {}
+      }
+
+      // Step 2: get contacts from feu5-w2e2 using registrationid
+      if (regId) {
+        try {
+          const cRes = await fetch(`https://data.cityofnewyork.us/resource/feu5-w2e2.json?$where=${enc(`registrationid='${regId}'`)}&$limit=20`,{signal:ctrl.signal, headers:TOKEN_HEADER});
+          if (cRes.ok) {
+            const contacts = await cRes.json();
+            const expNote = regExpiry ? `Reg. expires ${regExpiry.slice(0,10)}` : '';
+            contacts.forEach(c => {
+              const type = (c.type||'').toLowerCase();
+              const name = [c.firstname, c.lastname].filter(Boolean).map(toTC).join(' ') || toTC(c.corporationname||'');
+              const addr = [c.businesshousenumber, c.businessstreetname, c.businessapartment, c.city, c.state, c.zipcode].filter(Boolean).map(toTC).join(' ');
+              const phone = c.businessphone||'';
+              if (!name) return;
+              if (type.includes('owner') || type.includes('corporate')) {
+                cards.push({type: type.includes('individual') ? 'HPD Registered Owner' : 'HPD Registered Owner (Corp)', name, addr, phone, note: expNote});
+              } else if (type.includes('agent')) {
+                cards.push({type: 'HPD Managing Agent', name, addr, phone});
+              } else if (type.includes('officer')) {
+                cards.push({type: 'HPD Officer', name, addr, phone});
+              }
+            });
+          }
+        } catch(e) { console.log('[HPDReg] contacts error:', e.message); }
+      }
+    } catch(e){if(e.name!=='AbortError')console.log('[HPDReg]',e.message);}
+  }
+  const body=document.getElementById('ownBody');
+  if(!body)return;
+  if(!cards.length){
+    body.innerHTML='<div style="font-size:0.75rem;color:var(--gray);opacity:0.6">No ownership records found in ACRIS or HPD registration.</div>';
+    return;
+  }
+  body.innerHTML=cards.map(c=>`<div class="own-card"><div class="own-card-type">${htmlEsc(c.type)}</div><div class="own-card-name">${htmlEsc(c.name)}</div>${c.addr?`<div class="own-card-addr">${htmlEsc(c.addr)}</div>`:''}${c.phone?`<div class="own-card-addr" style="color:var(--gold);margin-top:3px">📞 ${htmlEsc(c.phone)}</div>`:''}${c.note?`<div class="own-card-addr" style="opacity:0.6;margin-top:3px;font-size:0.7rem">${htmlEsc(c.note)}</div>`:''}${c.link?`<a style="display:inline-block;margin-top:6px;font-size:0.68rem;font-weight:700;color:var(--gold);text-decoration:none" href="${c.link}" target="_blank">${c.linkLabel}</a>`:''}</div>`).join('');
+}
+
+// ── CERTIFICATE OF OCCUPANCY ───────────────────────────────────────────────
+// BIS (Legacy) COs:  bs8b-p36w — fields: job__, bin__, co_issue_date, c_o_type, occupancy, stories_in_structure, dwelling_units
+// DOB NOW COs:       pkdm-hqz6 — fields: bin, job_filing_number, co_type, issue_date, occupancy_classification
+// Queries both simultaneously, prefers permanent CO over temp
+
+async function fetchCO(bin) {
+  const panel = document.getElementById('buildingProfile');
+  if (!panel) return;
+  panel.querySelector('.co-bar')?.remove();
+
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), 12000);
+
+  try {
+    // BIS CO fields: bin_number, c_o_issue_date, job_type, issue_type, application_status_raw, filing_status_raw
+    const [bisRes, nowRes] = await Promise.all([
+      fetch(`https://data.cityofnewyork.us/resource/bs8b-p36w.json?$where=${enc(`bin_number='${bin}'`)}&$limit=10`, {signal: ctrl.signal, headers: TOKEN_HEADER}),
+      fetch(`https://data.cityofnewyork.us/resource/pkdm-hqz6.json?$where=${enc(`bin='${bin}'`)}&$limit=10`, {signal: ctrl.signal, headers: TOKEN_HEADER})
+    ]);
+
+    const bisRows = bisRes.ok ? await bisRes.json() : [];
+    const nowRows = nowRes.ok ? await nowRes.json() : [];
+    const allRows = [...(Array.isArray(bisRows)?bisRows:[]), ...(Array.isArray(nowRows)?nowRows:[])];
+
+    const bar = document.createElement('div');
+
+    if (!allRows.length) {
+      bar.className = 'co-bar co-warn';
+      bar.innerHTML = `
+        <span class="co-badge warn">⚠ No CO Found</span>
+        <span class="co-detail">No certificate of occupancy on file in DOB records</span>
+        <a class="co-link" href="https://a810-bisweb.nyc.gov/bisweb/PropertyProfileOverviewServlet?bin=${bin}" target="_blank">DOB BIS ↗</a>`;
+    } else {
+      // Classify rows
+      const isPerm = r => {
+        // BIS uses issue_type: "CO" | DOB NOW uses co_type
+        const t = (r.issue_type || r.c_o_type || r.co_type || r.filing_status_raw || '').toUpperCase();
+        return t === 'CO' || t === 'FINAL CO' || t === 'CERTIFICATE OF OCCUPANCY' ||
+               (t.includes('CO') && !t.includes('TCO') && !t.includes('TEMP'));
+      };
+      const isTemp = r => {
+        const t = (r.issue_type || r.c_o_type || r.co_type || r.filing_status_raw || '').toUpperCase();
+        return t === 'TCO' || t.includes('TCO') || t.includes('TEMP');
+      };
+
+      const permCO = allRows.find(isPerm);
+      const tempCO = allRows.find(isTemp);
+
+      if (permCO) {
+        const issued  = (permCO.c_o_issue_date || permCO.co_issue_date || permCO.issue_date || '').slice(0,20);
+        const occ     = permCO.occupancy || permCO.occupancy_classification || '';
+        const units   = permCO.dwelling_units || '';
+        const stories = permCO.stories_in_structure || '';
+        bar.className = 'co-bar co-ok';
+        bar.innerHTML = `
+          <span class="co-badge ok">✓ Permanent CO</span>
+          <span class="co-detail">${[occ, units?units+' units':'', stories?stories+' stories':'', issued?'Issued '+issued:''].filter(Boolean).join(' · ')}</span>
+          ${tempCO ? `<span class="co-badge warn" style="font-size:0.65rem;padding:2px 7px">+ Temp CO on file</span>` : ''}
+          <a class="co-link" href="https://a810-bisweb.nyc.gov/bisweb/PropertyProfileOverviewServlet?bin=${bin}" target="_blank">View on DOB ↗</a>`;
+      } else if (tempCO) {
+        const issued = (tempCO.c_o_issue_date || tempCO.co_issue_date || tempCO.issue_date || '').slice(0,20);
+        const occ    = tempCO.occupancy || tempCO.occupancy_classification || '';
+        bar.className = 'co-bar co-warn';
+        bar.innerHTML = `
+          <span class="co-badge warn">⚠ Temporary CO Only</span>
+          <span class="co-detail">${[occ, issued?'Issued '+issued:'', 'No permanent CO on file'].filter(Boolean).join(' · ')}</span>
+          <a class="co-link" href="https://a810-bisweb.nyc.gov/bisweb/PropertyProfileOverviewServlet?bin=${bin}" target="_blank">View on DOB ↗</a>`;
+      } else {
+        const latest  = allRows[0];
+        const issued  = (latest.c_o_issue_date || latest.co_issue_date || latest.issue_date || '').slice(0,20);
+        const occ     = latest.occupancy || latest.occupancy_classification || '';
+        const type    = latest.issue_type || latest.c_o_type || latest.co_type || 'CO';
+        bar.className = 'co-bar co-ok';
+        bar.innerHTML = `
+          <span class="co-badge ok">${type}</span>
+          <span class="co-detail">${[occ, issued?'Issued '+issued:''].filter(Boolean).join(' · ')}</span>
+          <a class="co-link" href="https://a810-bisweb.nyc.gov/bisweb/PropertyProfileOverviewServlet?bin=${bin}" target="_blank">View on DOB ↗</a>`;
+      }
+    }
+    panel.appendChild(bar);
+
+  } catch(e) {
+    // CO lookup is optional; suppress console noise from intermittent NYC Open Data errors.
+  }
+}
+
+
+// ── ENTITIES ON RECORD ────────────────────────────────────────────────────
+// Uses HPD violations dataset for registration info (reliable, already queried)
+// Plus DCA licensed businesses by address
+
+async function fetchEntities(bin, formHouse, formStreet) {
+  const panel = document.getElementById('buildingProfile');
+  if (!panel) return;
+
+  const section = document.createElement('div');
+  section.className = 'bp-entities';
+  section.id = 'bpEntities';
+  panel.appendChild(section);
+
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), 12000);
+
+  try {
+    const entities = [];
+    const seen = new Set();
+
+    const addEntity = (icon, name, role, roleClass) => {
+      if (!name) return;
+      const key = name.toUpperCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      const clean = name.replace(/\b\w+/g, w => isNaN(w) ? w.charAt(0).toUpperCase()+w.slice(1).toLowerCase() : w);
+      entities.push({icon, name: clean, role, roleClass});
+    };
+
+    // ── 1. PLUTO owner (already in header) ───────────────────────────────
+    if (window._plutoOwner) addEntity('🏢', window._plutoOwner, 'Owner (PLUTO)', 'hpd');
+
+    // ── 2. HPD Buildings dataset — has ownername, managername ────────────
+    try {
+      const hpdB = await fetch(`https://data.cityofnewyork.us/resource/kj4p-ruqc.json?$where=${enc(`bin=${parseInt(bin)||0}`)}&$limit=1`, {signal: ctrl.signal});
+      if (hpdB.ok) {
+        const rows = await hpdB.json();
+        if (rows[0]) {
+          const r = rows[0];
+          const ownerFirst = r.ownerfirstname||'', ownerLast = r.ownerlastname||'';
+          const ownerCorp  = r.corporationname||'';
+          const ownerName  = ownerCorp || [ownerFirst, ownerLast].filter(Boolean).join(' ');
+          const agentFirst = r.agentfirstname||'', agentLast = r.agentlastname||'';
+          const agentName  = [agentFirst, agentLast].filter(Boolean).join(' ');
+          const agentBiz   = r.agentbusinessname||'';
+          addEntity('🏢', ownerName,  'Owner (HPD)', 'hpd');
+          addEntity('👤', agentName,  'Managing Agent', 'agent');
+          addEntity('🏢', agentBiz,   'Agent Business', 'agent');
+        }
+      }
+    } catch(e) {}
+
+    // ── 3. HPD Registration (tesw-yqqr) ──────────────────────────────────
+    try {
+      const hpdR = await fetch(`https://data.cityofnewyork.us/resource/tesw-yqqr.json?bin=${parseInt(bin)||0}&$limit=1`, {headers:TOKEN_HEADER}, {signal: ctrl.signal});
+      if (hpdR.ok) {
+        const rows = await hpdR.json();
+        if (rows[0]) {
+          const r = rows[0];
+          addEntity('🏢', r.corporationname, 'Registered Owner', 'hpd');
+          addEntity('👤', [r.ownerfirstname, r.ownerlastname].filter(Boolean).join(' '), 'Owner', 'hpd');
+          addEntity('👤', [r.agentfirstname, r.agentlastname].filter(Boolean).join(' '), 'Managing Agent', 'agent');
+          addEntity('🏢', r.agentbusinessname, 'Agent Business', 'agent');
+        }
+      }
+    } catch(e) {}
+
+    // ── 4. DCA Licensed Businesses ────────────────────────────────────────
+    // DCA — try multiple address formats since lots can have multiple addresses
+    const dcaAddresses = [];
+    if (formHouse && formStreet) dcaAddresses.push({h: formHouse, s: formStreet});
+    // Also try PLUTO primary address if different
+    const pa = window._plutoAddr;
+    if (pa?.plutoStreet && pa.plutoStreet.toUpperCase() !== (formStreet||'').toUpperCase()) {
+      const plutoHouse = (pa.house || formHouse);
+      dcaAddresses.push({h: plutoHouse, s: pa.plutoStreet});
+    }
+    for (const addr of dcaAddresses) {
+      try {
+        const dcaR = await fetch(
+          `https://data.cityofnewyork.us/resource/w7w3-xahh.json?$where=${enc(`address_building='${addr.h}' AND upper(address_street_name) like '${addr.s.toUpperCase()}%25'`)}&$limit=20`,
+          {signal: ctrl.signal}
+        );
+        if (dcaR.ok) {
+          const dca = await dcaR.json();
+          if (Array.isArray(dca)) {
+            dca.forEach(b => {
+              const name = (b.business_name || b.dba_name || '').trim();
+              const licType = b.license_type || b.industry || 'DCA License';
+              if (name) addEntity('🏪', name, licType, 'dca');
+            });
+          }
+        }
+      } catch(e) {}
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────
+    if (!entities.length) { section.remove(); return; }
+
+    const gmapsUrl = formHouse && formStreet
+      ? `https://www.google.com/maps/search/${encodeURIComponent(formHouse+' '+formStreet+', New York, NY')}`
+      : null;
+
+    section.innerHTML = `
+      <div class="bp-entities-header" onclick="
+        const list=document.getElementById('bpEntitiesList');
+        const arrow=document.getElementById('bpEntitiesArrow');
+        list.classList.toggle('open');
+        arrow.classList.toggle('open');
+      ">
+        <span class="bp-entities-title">Entities on Record</span>
+        <span class="bp-entities-count">${entities.length}</span>
+        ${gmapsUrl ? `<a href="${gmapsUrl}" target="_blank" rel="noopener"
+          onclick="event.stopPropagation()"
+          style="margin-left:auto;margin-right:8px;font-family:'Barlow Condensed',sans-serif;
+                 font-size:0.68rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+                 color:var(--gold);text-decoration:none;border-bottom:1px dashed rgba(201,160,48,0.3);
+                 white-space:nowrap;flex-shrink:0">
+          View on Google Maps ↗
+        </a>` : ''}
+        <span class="bp-entities-arrow" id="bpEntitiesArrow">▼</span>
+      </div>
+      <div class="bp-entities-list" id="bpEntitiesList">
+        ${entities.map(e => `
+          <div class="bp-entity-row">
+            <span class="bp-entity-icon">${e.icon}</span>
+            <span class="bp-entity-name">${e.name}</span>
+            <span class="bp-entity-role ${e.roleClass}">${e.role}</span>
+          </div>`).join('')}
+        <div class="bp-entity-row" style="border-top:1px solid rgba(255,255,255,0.04);margin-top:4px;padding-top:10px">
+          <span class="bp-entity-icon">🔍</span>
+          <span class="bp-entity-name" style="color:var(--gray);font-size:0.75rem">
+            For all businesses at this address
+          </span>
+          ${gmapsUrl ? `<a href="${gmapsUrl}" target="_blank" rel="noopener"
+            style="font-family:'Barlow Condensed',sans-serif;font-size:0.68rem;font-weight:700;
+                   letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);
+                   text-decoration:none;border-bottom:1px dashed rgba(201,160,48,0.3)">
+            Google Maps ↗
+          </a>` : ''}
+        </div>
+      </div>`;
+
+  } catch(e) {
+    section.remove();
+  }
+}
+
+
+// ── BUILDING PROFILE ───────────────────────────────────────────────────────
+// Fetches building info from PLUTO (DCP) using BIN
+// PLUTO fields: numfloors, unitsres, unitstotal, bldgclass, yearbuilt,
+//   yearalter1, ownername, lotarea, bldgarea, zonedist1, address, landuse
+// Also fetches HPD building registration for: lifecycle, legalstories, legalclassa
+
+
+
+// ── SESSION RESTORE ───────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  try { restoreLastSearchState(); } catch(e) {}
+});
+
+// ── PRINT REPORT ──────────────────────────────────────────────────────────
+function printReport() {
+  // Expand all result blocks and entities for printing
+  document.querySelectorAll('.atbl').forEach(el => el.classList.add('o'));
+  document.querySelectorAll('.chv').forEach(el => el.classList.add('o'));
+  document.querySelectorAll('.bp-entities-list').forEach(el => el.classList.add('open'));
+  document.querySelectorAll('.bp-entities-arrow').forEach(el => el.classList.add('open'));
+  window.print();
+  // Restore after print
+  setTimeout(() => {
+    document.querySelectorAll('.atbl').forEach(el => el.classList.remove('o'));
+    document.querySelectorAll('.chv').forEach(el => el.classList.remove('o'));
+  }, 2000);
+}
+
+
+</script>
+</body>
+</html>
